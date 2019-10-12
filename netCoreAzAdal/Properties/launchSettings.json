@@ -1,6 +1,6 @@
 {
   "profiles": {
-    "netCoreWpfApp1": {
+    "netCoreAzAdal": {
       "commandName": "Project",
       "commandLineArgs": "/resource https://sflogs.kusto.windows.net"
     }

@@ -1,7 +1,7 @@
-﻿<Application x:Class="netCoreWpfApp1.App"
+﻿<Application x:Class="netCoreAzAdal.App"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:local="clr-namespace:netCoreWpfApp1"
+             xmlns:local="clr-namespace:netCoreAzAdal"
              Startup="App_Startup">
     <Application.Resources>
     </Application.Resources>

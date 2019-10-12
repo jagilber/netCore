@@ -12,7 +12,7 @@ using System.Windows;
 using System.Windows.Threading;
 using System.Text.Json;
 
-namespace netCoreWpfApp1
+namespace netCoreAzAdal
 {
     public partial class App : Application
     {
