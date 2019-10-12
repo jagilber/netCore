@@ -17,6 +17,7 @@ namespace netCoreAzAdal
     public partial class App : Application
     {
         private string _clientId = "1950a258-227b-4e31-a9cf-717495945fc2";
+        private bool _force = false;
         private string _redirectUri = "urn:ietf:wg:oauth:2.0:oob";
         private string _resource = null;
         private string _tenantId = "common";
@@ -35,6 +36,7 @@ namespace netCoreAzAdal
                 if (e.Args[i] == "/redirectUri") { _redirectUri = e.Args[i + 1]; }
                 if (e.Args[i] == "/clientId") { _clientId = e.Args[i + 1]; }
                 if (e.Args[i] == "/tenantId") { _tenantId = e.Args[i + 1]; }
+                if (e.Args[i] == "/force") { _force = true; }
             }
 
             Authorize();
@@ -60,7 +62,7 @@ namespace netCoreAzAdal
                 result = null;
             }
 
-            if (result == null)
+            if (result == null | _force)
             {
                 result = await authContext.AcquireTokenAsync(_resource,
                 _clientId,
