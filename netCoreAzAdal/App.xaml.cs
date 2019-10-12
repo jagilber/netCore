@@ -12,7 +12,6 @@ using System.Windows;
 using System.Windows.Threading;
 using System.Text.Json;
 
-//https://techcommunity.microsoft.com/t5/Windows-Dev-AppConsult/How-to-use-Active-Directory-Authentication-Library-ADAL-for-NET/ba-p/400623
 namespace netCoreWpfApp1
 {
     public partial class App : Application
