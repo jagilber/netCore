@@ -16,20 +16,25 @@ namespace netCoreAzAdal
 {
     public partial class App : Application
     {
+        private string _clientId = "1950a258-227b-4e31-a9cf-717495945fc2";
         private string _redirectUri = "urn:ietf:wg:oauth:2.0:oob";
         private string _resource = null;
-        private string _wellKnownId = "1950a258-227b-4e31-a9cf-717495945fc2";
+        private string _tenantId = "common";
 
         private void App_Startup(object sender, StartupEventArgs e)
         {
+            if(e.Args.Length < 2)
+            {
+                //Console.WriteLine("requires /resource argument. optional /redirectUri /clientId /tenantId");
+                throw new ArgumentException("requires /resource argument. optional /redirectUri /clientId /tenantId");
+            }
+
             for (int i = 0; i != e.Args.Length; ++i)
             {
-                _resource = e.Args[i];
-                //Console.WriteLine(e.Args[i]);
-                //if (e.Args[i] == "/resource")
-                //{
-                //_resource = e.Args[i + 1];
-                //}
+                if (e.Args[i] == "/resource") { _resource = e.Args[i + 1]; }
+                if (e.Args[i] == "/redirectUri") { _redirectUri = e.Args[i + 1]; }
+                if (e.Args[i] == "/clientId") { _clientId = e.Args[i + 1]; }
+                if (e.Args[i] == "/tenantId") { _tenantId = e.Args[i + 1]; }
             }
 
             Authorize();
@@ -37,7 +42,7 @@ namespace netCoreAzAdal
 
         private async void Authorize()
         {
-            AuthenticationContext authContext = new AuthenticationContext("https://login.microsoftonline.com/common");
+            AuthenticationContext authContext = new AuthenticationContext($"https://login.microsoftonline.com/{_tenantId}");
             AuthenticationResult result = default;
             Window window = new Window();
             CustomWebUi ui = new CustomWebUi(window.Dispatcher);
@@ -45,7 +50,7 @@ namespace netCoreAzAdal
             try
             {
                 result = await authContext.AcquireTokenAsync(_resource,
-                    _wellKnownId,
+                    _clientId,
                     new Uri(_redirectUri),
                     new PlatformParameters(PromptBehavior.Auto, ui));
             }
@@ -58,7 +63,7 @@ namespace netCoreAzAdal
             if (result == null)
             {
                 result = await authContext.AcquireTokenAsync(_resource,
-                _wellKnownId,
+                _clientId,
                 new Uri(_redirectUri),
                 new PlatformParameters(PromptBehavior.Always, ui));
             }
