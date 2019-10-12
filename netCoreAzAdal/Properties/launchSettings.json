@@ -2,7 +2,7 @@
   "profiles": {
     "netCoreAzAdal": {
       "commandName": "Project",
-      "commandLineArgs": "/resource https://sflogs.kusto.windows.net"
+      "commandLineArgs": "/resource "
     }
   }
 }
