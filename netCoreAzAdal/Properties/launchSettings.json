@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "netCoreWpfApp1": {
+      "commandName": "Project",
+      "commandLineArgs": "/resource https://sflogs.kusto.windows.net"
+    }
+  }
+}
