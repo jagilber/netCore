@@ -254,5 +254,5 @@ ModelManifest.xml
 **/gather
 **/Configuration
 .vscode
-
+Properties/
 
