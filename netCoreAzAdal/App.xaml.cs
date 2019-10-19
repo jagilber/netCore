@@ -26,17 +26,19 @@ namespace netCoreAzAdal
         {
             if(e.Args.Length < 2)
             {
-                //Console.WriteLine("requires /resource argument. optional /redirectUri /clientId /tenantId");
-                throw new ArgumentException("requires /resource argument. optional /redirectUri /clientId /tenantId");
+                ShowHelp();
             }
 
             for (int i = 0; i != e.Args.Length; ++i)
             {
-                if (e.Args[i] == "/resource") { _resource = e.Args[i + 1]; }
-                if (e.Args[i] == "/redirectUri") { _redirectUri = e.Args[i + 1]; }
-                if (e.Args[i] == "/clientId") { _clientId = e.Args[i + 1]; }
-                if (e.Args[i] == "/tenantId") { _tenantId = e.Args[i + 1]; }
-                if (e.Args[i] == "/force") { _force = true; }
+                string arg = e.Args[i].ToLower();
+                if(arg.StartsWith('/')) { arg = '-' + arg.TrimStart('/'); }
+                if(arg == "-?") { ShowHelp(); }
+                if (arg == "-resource") { _resource = e.Args[i + 1]; }
+                if (arg == "-redirecturi") { _redirectUri = e.Args[i + 1]; }
+                if (arg == "-clientid") { _clientId = e.Args[i + 1]; }
+                if (arg == "-tenantid") { _tenantId = e.Args[i + 1]; }
+                if (arg == "-force") { _force = true; }
             }
 
             Authorize();
@@ -54,7 +56,7 @@ namespace netCoreAzAdal
                 result = await authContext.AcquireTokenAsync(_resource,
                     _clientId,
                     new Uri(_redirectUri),
-                    new PlatformParameters(PromptBehavior.Auto, ui));
+                    new PlatformParameters(_force ? PromptBehavior.Always : PromptBehavior.Auto, ui));
             }
             catch (Exception e)
             {
@@ -62,7 +64,7 @@ namespace netCoreAzAdal
                 result = null;
             }
 
-            if (result == null | _force)
+            if (result == null)
             {
                 result = await authContext.AcquireTokenAsync(_resource,
                 _clientId,
@@ -72,6 +74,13 @@ namespace netCoreAzAdal
 
             Console.WriteLine(result.AccessToken);
             App.Current.Shutdown();
+        }
+
+        private void ShowHelp()
+        {
+            Console.WriteLine("requires /resource argument. optional /redirectUri /clientId /tenantId");
+            App.Current.Shutdown();
+            //throw new ArgumentException(help);
         }
     }
 
