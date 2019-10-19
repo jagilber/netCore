@@ -54,7 +54,7 @@ namespace netCoreAzAdal
                 result = await authContext.AcquireTokenAsync(_resource,
                     _clientId,
                     new Uri(_redirectUri),
-                    new PlatformParameters(PromptBehavior.Auto, ui));
+                    new PlatformParameters(PromptBehavior.Always, ui));
             }
             catch (Exception e)
             {
