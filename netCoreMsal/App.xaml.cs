@@ -14,6 +14,8 @@ using Windows.Web.UI;
 using Microsoft.Toolkit.Win32.UI.Controls.Interop.WinRT;
 using Microsoft.Toolkit.Wpf.UI.Controls;
 
+//https://docs.microsoft.com/en-us/azure/active-directory/develop/v2-permissions-and-consent#requesting-individual-user-consent
+
 namespace netCoreMsal
 {
     /// <summary>
@@ -23,11 +25,11 @@ namespace netCoreMsal
     {
         public static string ClientId = "1950a258-227b-4e31-a9cf-717495945fc2";
         public static bool Force = false;
-        public static string RedirectUri = "http://localhost";//"urn:ietf:wg:oauth:2.0:oob";
+        public static string RedirectUri = "http://localhost:44321/";//"urn:ietf:wg:oauth:2.0:oob";
         public static string Resource = null;
         public static string TenantId = "common";
 
-        public static List<string> Scopes { get; set; } = new List<string>();
+        public static List<string> Scope { get; set; } = new List<string>();
 
         private void App_Startup(object sender, StartupEventArgs e)
         {
@@ -40,16 +42,24 @@ namespace netCoreMsal
 
             for (int i = 0; i != e.Args.Length; ++i)
             {
-                string arg = e.Args[i].TrimStart('/').TrimStart('-').ToLower();
-                if (arg == "resource") { Resource = e.Args[i + 1]; }
-                if (arg == "redirectUri") { RedirectUri = e.Args[i + 1]; }
-                if (arg == "clientId") { ClientId = e.Args[i + 1]; }
-                if (arg == "tenantId") { TenantId = e.Args[i + 1]; }
-                if (arg == "force") { Force = true; }
+                string arg = e.Args[i].ToLower();
+                if(arg.StartsWith('/')) { arg = '-' + arg.TrimStart('/'); }
+                if(arg == "-?") { ShowHelp(); }
+                if (arg == "-resource") { Resource = e.Args[i + 1]; }
+                if (arg == "-redirecturi") { RedirectUri = e.Args[i + 1]; }
+                if (arg == "-clientid") { ClientId = e.Args[i + 1]; }
+                if (arg == "-tenantid") { TenantId = e.Args[i + 1]; }
+                if (arg == "-scope") { Scope.Add(e.Args[i + 1]); }
+                if (arg == "-force") { Force = true; }
             }
-
-            //Authorize();
         }
+
+        private void ShowHelp()
+        {
+            Console.WriteLine("requires /resource argument. optional /redirectUri /clientId /tenantId");
+            App.Current.Shutdown();
+        }
+
     }
 
     public class CustomWebUi : ICustomWebUi
@@ -59,7 +69,6 @@ namespace netCoreMsal
         public Uri _uri;
         public Window Window { get; set; }
         public WebView WebViewInstance { get; set; } = new WebView();
-        bool _redirected = false;
         public CustomWebUi(Window window) : this(window.Dispatcher)
         {
             Window = window;
@@ -115,75 +124,18 @@ namespace netCoreMsal
                         Window.DialogResult = false;
                         Window.Close();
                     }
-                    else if (e.Uri.Query.Contains("code="))// | e.Uri.Query.Contains("wa=wsignin1"))
+                    else if (e.Uri.Query.Contains("code="))
                     {
                         Console.WriteLine("navigationcompleted:code");
                         tcs.SetResult(e.Uri);
                         Window.DialogResult = true;
                         Window.Close();
                     }
-                    else if (e.Uri.Query.Contains("wa=wsignin1") & !_redirected)
-                    {
-                        Console.WriteLine("navigationcompleted:sts signin");
-                        NavigationCompletedResponse = e;
-                        //WebViewInstance.Source = e.Uri;
-                        //Console.WriteLine("navigationcompleted:sts signin source updated");
-                        //WebViewInstance.UpdateLayout();
-                        if (_redirected)
-                        {
-                            tcs.SetResult(e.Uri);
-                            Window.DialogResult = true;
-                            Window.Close();
-                        }
-
-                        //WebViewInstance.Navigate(e.Uri); // not  working
-                        //string stsContent = new WebClient().DownloadString(e.Uri);
-                        //Console.WriteLine("sts content");
-                        //Console.WriteLine(JsonSerializer.Serialize(stsContent, new JsonSerializerOptions() { WriteIndented = true }));
-                        //WebViewInstance.NavigateToString(stsContent);
-                        //Console.WriteLine("navigationcompleted:sts navigated");
-                        //_window.UpdateLayout(); // not tried
-                        //tcs.SetResult(e.Uri); // not working
-                        //_window.DialogResult = true; // not working
-                        //Console.WriteLine("navigationcompleted:sts updatedlayout");
-                        //WebClient webClient = new WebClient();
-                        //webClient.
-                        _redirected = true;
-                    }
-                    //    WebView webView = new WebView();
-                    //    Window w = new Window
-                    //    {
-                    //        Title = "Authorization sts",
-                    //        WindowStyle = WindowStyle.ToolWindow,
-                    //        Content = webView,
-                    //        Width = 500,
-                    //        Height = 500,
-                    //        ResizeMode = ResizeMode.CanResizeWithGrip
-                    //    };
-
-                    //    w.Loaded += (_, __) => webView.Navigate(e.Uri);
-                    //    w.Show();
-                    //    //w.DialogResult = true;
-                    //    //w.Close();
-
-                    //}
-                    //else if(e.Uri.AbsoluteUri.Contains("stsredirect"))
-                    //{
-                    //    Console.WriteLine("navigationcompleted:stsredirect");
-                    //    NavigationCompletedResponse = e;
-                    //    //AcquireAuthorizationCodeAsync(authorizationUri, e.Uri); // didnt work
-                    //    //AcquireAuthorizationCodeAsync(e.Uri, new Uri("/adfs/ls/")); // 
-                    //    //webView.Navigate(e.Uri);
-                    //    tcs.SetResult(e.Uri);
-                    //    //webView.Refresh();
-                    //}
-
                 };
 
                 WebViewInstance.UnsupportedUriSchemeIdentified += (_, e) =>
                 {
                     Console.WriteLine("unsupported");
-                    //System.Diagnostics.Debug.WriteLine(e.Uri);
                     if (e.Uri.Query.Contains("code="))
                     {
                         tcs.SetResult(e.Uri);
@@ -193,7 +145,6 @@ namespace netCoreMsal
                     else
                     {
                         Console.WriteLine("unknown error");
-                        //System.Diagnostics.Debug.WriteLine(e.Uri);
                         tcs.SetException(new Exception($"Unknown error: {e.Uri}"));
                         Window.DialogResult = false;
                         Window.Close();
