@@ -5,6 +5,9 @@
 
 using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Security.Cryptography;
 using Microsoft.Identity.Client;
 
 namespace netCoreMsalCli
@@ -53,7 +56,7 @@ namespace netCoreMsalCli
                 if (arg == "-force") { Force = true; }
             }
 
-            if(Scope.Count < 1)
+            if (Scope.Count < 1)
             {
                 Scope.Add(".default");
             }
@@ -69,10 +72,20 @@ namespace netCoreMsalCli
                 .WithAuthority(AzureCloudInstance.AzurePublic, TenantId)
                 .WithDefaultRedirectUri()
                 .Build();
+            TokenCacheHelper.EnableSerialization(PublicClientApp.UserTokenCache);
 
-            authenticationResult = PublicClientApp
-                .AcquireTokenInteractive(Scope)
-                .ExecuteAsync().Result;
+            try
+            {
+                authenticationResult = PublicClientApp
+                    .AcquireTokenSilent(Scope, PublicClientApp.GetAccountsAsync().Result.FirstOrDefault())
+                    .ExecuteAsync().Result;
+            }
+            catch (MsalUiRequiredException)
+            {
+                authenticationResult = PublicClientApp
+                    .AcquireTokenInteractive(Scope)
+                    .ExecuteAsync().Result;
+            }
 
             Console.WriteLine(authenticationResult.AccessToken);
         }
@@ -88,6 +101,51 @@ namespace netCoreMsalCli
             Console.WriteLine("requires -resource argument. optional -redirectUri -clientId -tenantId -scope");
             Console.WriteLine("run from non administrator prompt!");
 
+        }
+        static class TokenCacheHelper
+        {
+            public static void EnableSerialization(ITokenCache tokenCache)
+            {
+                tokenCache.SetBeforeAccess(BeforeAccessNotification);
+                tokenCache.SetAfterAccess(AfterAccessNotification);
+            }
+
+            /// <summary>
+            /// Path to the token cache
+            /// </summary>
+            public static readonly string CacheFilePath = System.Reflection.Assembly.GetExecutingAssembly().Location + ".msalcache.bin3";
+
+            private static readonly object FileLock = new object();
+
+
+            private static void BeforeAccessNotification(TokenCacheNotificationArgs args)
+            {
+                lock (FileLock)
+                {
+                    args.TokenCache.DeserializeMsalV3(File.Exists(CacheFilePath)
+                            ? ProtectedData.Unprotect(File.ReadAllBytes(CacheFilePath),
+                                                      null,
+                                                      DataProtectionScope.CurrentUser)
+                            : null);
+                }
+            }
+
+            private static void AfterAccessNotification(TokenCacheNotificationArgs args)
+            {
+                // if the access operation resulted in a cache update
+                if (args.HasStateChanged)
+                {
+                    lock (FileLock)
+                    {
+                        // reflect changesgs in the persistent store
+                        File.WriteAllBytes(CacheFilePath,
+                                            ProtectedData.Protect(args.TokenCache.SerializeMsalV3(),
+                                                                    null,
+                                                                    DataProtectionScope.CurrentUser)
+                                            );
+                    }
+                }
+            }
         }
     }
 }
