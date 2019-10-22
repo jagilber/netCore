@@ -4,7 +4,6 @@
 // ------------------------------------------------------------
 
 using System;
-using System.Diagnostics;
 using System.Collections.Generic;
 using Microsoft.Identity.Client;
 
@@ -15,11 +14,11 @@ namespace netCoreMsalCli
         public static string ClientId = "1950a258-227b-4e31-a9cf-717495945fc2";
         public static bool Force = false;
         public static IPublicClientApplication PublicClientApp;
-        public static string RedirectUri = "http://localhost:44321";
+        public static string RedirectUri = "http://localhost";
         public static string Resource = null;
         public static string TenantId = "common";
 
-        public static List<string> Scope { get; set; } = new List<string>();// { ".default" };//{"kusto.read"};
+        public static List<string> Scope { get; set; } = new List<string>();
 
         private static void Main(string[] args)
         {
@@ -35,7 +34,7 @@ namespace netCoreMsalCli
 
         private void App_Startup(string[] args)
         {
-            Debug.Print("app_startup. run from non administrator prompt");
+
             if (args.Length < 2)
             {
                 ShowHelp();
@@ -54,11 +53,10 @@ namespace netCoreMsalCli
                 if (arg == "-force") { Force = true; }
             }
 
-                Debug.Print($"scope: {Scope[0].ToString()}");
-                Debug.Print($"resource: {Resource}");
-                Debug.Print($"clientID: {ClientId}");
-                Debug.Print($"RedirectUri: {RedirectUri}");
-                Debug.Print($"tenantID: {TenantId}");
+            if(Scope.Count < 1)
+            {
+                Scope.Add(".default");
+            }
 
             Authorize();
         }
@@ -66,7 +64,8 @@ namespace netCoreMsalCli
         private void Authorize()
         {
             AuthenticationResult authenticationResult = default;
-            PublicClientApp = PublicClientApplicationBuilder.Create(ClientId)
+            PublicClientApp = PublicClientApplicationBuilder
+                .Create(ClientId)
                 .WithAuthority(AzureCloudInstance.AzurePublic, TenantId)
                 .WithDefaultRedirectUri()
                 .Build();
@@ -80,7 +79,15 @@ namespace netCoreMsalCli
 
         private void ShowHelp()
         {
+            Console.WriteLine($"scope: {Scope[0].ToString()}");
+            Console.WriteLine($"resource: {Resource}");
+            Console.WriteLine($"clientID: {ClientId}");
+            Console.WriteLine($"RedirectUri: {RedirectUri}");
+            Console.WriteLine($"tenantID: {TenantId}");
+            Console.WriteLine("");
             Console.WriteLine("requires -resource argument. optional -redirectUri -clientId -tenantId -scope");
+            Console.WriteLine("run from non administrator prompt!");
+
         }
     }
 }
