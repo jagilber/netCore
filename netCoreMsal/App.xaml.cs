@@ -1,18 +1,14 @@
 ﻿using Microsoft.Identity.Client.Extensibility;
-//using Microsoft.Toolkit.Wpf.UI.Controls;
 using System;
 using System.Collections.Generic;
-using System.Configuration;
-using System.Data;
-using System.Linq;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Threading;
-using Windows.Web.UI;
-using Microsoft.Toolkit.Win32.UI.Controls.Interop.WinRT;
 using Microsoft.Toolkit.Wpf.UI.Controls;
+using Microsoft.Identity.Client;
+
 
 //https://docs.microsoft.com/en-us/azure/active-directory/develop/v2-permissions-and-consent#requesting-individual-user-consent
 
@@ -23,13 +19,14 @@ namespace netCoreMsal
     /// </summary>
     public partial class App : Application
     {
+        public static IPublicClientApplication PublicClientApp;
         public static string ClientId = "1950a258-227b-4e31-a9cf-717495945fc2";
         public static bool Force = false;
-        public static string RedirectUri = "http://localhost:44321"; //"http://localhost:44321/";//"urn:ietf:wg:oauth:2.0:oob";
+        public static string RedirectUri = "http://localhost:44321";
         public static string Resource = null;
         public static string TenantId = "common";
 
-        public static List<string> Scope { get; set; } = new List<string>();//{".default"};//{"kusto.read"};
+        public static List<string> Scope { get; set; } = new List<string> { ".default" };//{"kusto.read"};
 
         private void App_Startup(object sender, StartupEventArgs e)
         {
@@ -43,8 +40,8 @@ namespace netCoreMsal
             for (int i = 0; i != e.Args.Length; ++i)
             {
                 string arg = e.Args[i].ToLower();
-                if(arg.StartsWith('/')) { arg = '-' + arg.TrimStart('/'); }
-                if(arg == "-?") { ShowHelp(); }
+                if (arg.StartsWith('/')) { arg = '-' + arg.TrimStart('/'); }
+                if (arg == "-?") { ShowHelp(); }
                 if (arg == "-resource") { Resource = e.Args[i + 1]; }
                 if (arg == "-redirecturi") { RedirectUri = e.Args[i + 1]; }
                 if (arg == "-clientid") { ClientId = e.Args[i + 1]; }
@@ -52,16 +49,52 @@ namespace netCoreMsal
                 if (arg == "-scope") { Scope.Add(e.Args[i + 1]); }
                 if (arg == "-force") { Force = true; }
             }
+
+            Authorize();
         }
 
         private void ShowHelp()
         {
-            Console.WriteLine("requires /resource argument. optional /redirectUri /clientId /tenantId");
+            Console.WriteLine("requires -resource argument. optional -redirectUri -clientId -tenantId -scope");
             App.Current.Shutdown();
         }
 
-    }
 
+        private async void Authorize()
+        {
+            PublicClientApp = PublicClientApplicationBuilder.Create(App.ClientId)
+                .WithAuthority(AzureCloudInstance.AzurePublic, App.TenantId)
+                //.WithRedirectUri(App.RedirectUri)
+                .WithDefaultRedirectUri()
+                .Build();
+
+            CustomWebUi customWebUi = new CustomWebUi(Dispatcher);
+            AuthenticationResult authenticationResult = default;
+
+            try
+            {
+                Console.WriteLine($"scope: {App.Scope[0].ToString()}");
+                Console.WriteLine($"resource: {App.Resource}");
+                Console.WriteLine($"clientID: {App.ClientId}");
+                Console.WriteLine($"RedirectUri: {App.RedirectUri}");
+                Console.WriteLine($"tenantID: {App.TenantId}");
+
+                //authenticationResult = await PublicClientApp.AcquireTokenInteractive(App.Scope).WithCustomWebUi(customWebUi).ExecuteAsync(); // works through to phone auth but fails AADSTS65002
+                authenticationResult = await PublicClientApp
+                    .AcquireTokenInteractive(App.Scope)
+                    .WithCustomWebUi(customWebUi)
+                    .ExecuteAsync(); // 
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.ToString());
+            }
+
+            Console.WriteLine(authenticationResult.AccessToken);
+            App.Current.Shutdown();
+        }
+    }
+    
     public class CustomWebUi : ICustomWebUi
     {
         private readonly Dispatcher _dispatcher;
@@ -91,14 +124,10 @@ namespace netCoreMsal
             TaskCompletionSource<Uri> tcs = new TaskCompletionSource<Uri>();
             _dispatcher.InvokeAsync(() =>
             {
-
-
                 if (Window == null)
                 {
                     Window = new Window();
                 }
-
-
 
                 Window.Title = "Authorization";
                 Window.WindowStyle = WindowStyle.ToolWindow;
@@ -106,8 +135,6 @@ namespace netCoreMsal
                 Window.Width = 500;
                 Window.Height = 500;
                 Window.ResizeMode = ResizeMode.CanResizeWithGrip;
-
-
                 Window.Loaded += (_, __) => WebViewInstance.Navigate(authorizationUri);
 
                 WebViewInstance.NavigationCompleted += (_, e) =>
@@ -151,9 +178,9 @@ namespace netCoreMsal
                     }
                 };
 
-                // test
-                WebViewInstance.ContainsFullScreenElementChanged += (_, e) =>
-                {
+                    // test
+                    WebViewInstance.ContainsFullScreenElementChanged += (_, e) =>
+                        {
                     Console.WriteLine("ContainsFullScreenElementChanged");
                     Console.WriteLine(JsonSerializer.Serialize(e, new JsonSerializerOptions() { WriteIndented = true }));
                 };
@@ -213,9 +240,9 @@ namespace netCoreMsal
                     if (e.Uri.AbsoluteUri.Contains("stsredirect"))
                     {
                         Console.WriteLine("stsredirect");
-                        //webView.Navigate(e.Uri);
-                        //webView.Refresh();
-                    }
+                            //webView.Navigate(e.Uri);
+                            //webView.Refresh();
+                        }
 
                 };
 
@@ -250,13 +277,13 @@ namespace netCoreMsal
                 };
 
 
-                // end test
+                    // end test
 
-                if (Window.ShowDialog() != true && !tcs.Task.IsCompleted)
+                    if (Window.ShowDialog() != true && !tcs.Task.IsCompleted)
                 {
                     Console.WriteLine("cancelled");
-                    //System.Diagnostics.Debug.WriteLine("cancelled");
-                    tcs.SetException(new Exception("canceled"));
+                        //System.Diagnostics.Debug.WriteLine("cancelled");
+                        tcs.SetException(new Exception("canceled"));
                 }
 
 

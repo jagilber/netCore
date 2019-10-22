@@ -78,7 +78,7 @@ namespace netCoreAzAdal
 
         private void ShowHelp()
         {
-            Console.WriteLine("requires /resource argument. optional /redirectUri /clientId /tenantId");
+            Console.WriteLine("requires -resource argument. optional -redirectUri -clientId -tenantId");
             App.Current.Shutdown();
             //throw new ArgumentException(help);
         }
