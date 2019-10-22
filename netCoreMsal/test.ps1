@@ -4,6 +4,8 @@
     /tenantId 5488c913-eff7-43ba-9c66-e440e82b3b71 
     /scope "https://db.kusto.windows.net//user_impersonation"
 
+    test2
+    dotnet -d run /resource https://db.kusto.windows.net /tenantId 5488c913-eff7-43ba-9c66-e440e82b3b71  /scope "https://db.kusto.windows.net//.default"
 #>
 param(
     $clientId,

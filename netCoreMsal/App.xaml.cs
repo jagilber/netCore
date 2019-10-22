@@ -25,11 +25,11 @@ namespace netCoreMsal
     {
         public static string ClientId = "1950a258-227b-4e31-a9cf-717495945fc2";
         public static bool Force = false;
-        public static string RedirectUri = "http://localhost:44321/";//"urn:ietf:wg:oauth:2.0:oob";
+        public static string RedirectUri = "http://localhost:44321"; //"http://localhost:44321/";//"urn:ietf:wg:oauth:2.0:oob";
         public static string Resource = null;
         public static string TenantId = "common";
 
-        public static List<string> Scope { get; set; } = new List<string>();
+        public static List<string> Scope { get; set; } = new List<string>();//{".default"};//{"kusto.read"};
 
         private void App_Startup(object sender, StartupEventArgs e)
         {

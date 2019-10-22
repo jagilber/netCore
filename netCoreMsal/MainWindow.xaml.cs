@@ -33,7 +33,8 @@ namespace netCoreMsal
         {
             PublicClientApp = PublicClientApplicationBuilder.Create(App.ClientId)
                 .WithAuthority(AzureCloudInstance.AzurePublic, App.TenantId)
-                .WithRedirectUri(App.RedirectUri)
+                //.WithRedirectUri(App.RedirectUri)
+                .WithDefaultRedirectUri()
                 .Build();
 
             CustomWebUi customWebUi = new CustomWebUi(Dispatcher);
@@ -47,7 +48,11 @@ namespace netCoreMsal
                 Console.WriteLine($"RedirectUri: {App.RedirectUri}");
                 Console.WriteLine($"tenantID: {App.TenantId}");
 
-                authenticationResult = await PublicClientApp.AcquireTokenInteractive(App.Scope).WithCustomWebUi(customWebUi).ExecuteAsync(); // works through to phone auth but fails AADSTS65002
+                //authenticationResult = await PublicClientApp.AcquireTokenInteractive(App.Scope).WithCustomWebUi(customWebUi).ExecuteAsync(); // works through to phone auth but fails AADSTS65002
+                authenticationResult = await PublicClientApp
+                    .AcquireTokenInteractive(App.Scope)
+                    .WithCustomWebUi(customWebUi)
+                    .ExecuteAsync(); // 
             }
             catch (Exception e)
             {
