@@ -19,7 +19,9 @@ jobs:
 
     - name: environment
       shell: cmd
-      run: set
+      run: |
+        set 
+        tree /a /f .
       
     - name: nuget download
       shell: cmd
