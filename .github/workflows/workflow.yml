@@ -1,4 +1,4 @@
-name: CI netCore
+name: netCore CI
 
 env:
   artifacts_path: netCoreMsalCliTokenCache\bin\release\artifacts
