@@ -27,7 +27,7 @@ jobs:
 
     - name: nuget restore
       shell: cmd
-      run: nuget.exe restore -Verbosity Detailed -NonInteractive -DirectDownload
+      run: nuget.exe restore %project_name%\%project_name%.csproj -Verbosity Detailed -NonInteractive -DirectDownload
 
     - name: nuget build / pack
       shell: cmd
