@@ -18,13 +18,13 @@ namespace netCoreMsalTokenCacheCli
         private bool Force = false;
         private bool Help = false;
         private IPublicClientApplication PublicClientApp;
-        private string RedirectUri = "http://localhost";
+        private string RedirectUri = null; //"http://localhost";
         private string Resource = null;
         private string TenantId = "common";
 
         private List<string> Scope { get; set; } = new List<string>() { ".default" };
 
-        private static void Main(string[] args)
+        static void Main(string[] args)
         {
             try
             {
@@ -63,26 +63,33 @@ namespace netCoreMsalTokenCacheCli
                 return;
             }
 
-            if (Detail)
-            {
-                ShowDetail();
-            }
-
+            if (Detail) { ShowDetail(); }
             Authorize();
         }
 
         private void Authorize()
         {
             AuthenticationResult authenticationResult = default;
-            PublicClientApp = PublicClientApplicationBuilder
-                .Create(ClientId)
+
+            if (string.IsNullOrEmpty(RedirectUri))
+            {
+                PublicClientApp = PublicClientApplicationBuilder
+                    .Create(ClientId)
+                    .WithAuthority(AzureCloudInstance.AzurePublic, TenantId)
+                    .WithDefaultRedirectUri()
+                    .Build();
+            }
+            else
+            {
+                PublicClientApp = PublicClientApplicationBuilder
+                .CreateWithApplicationOptions(new PublicClientApplicationOptions { ClientId = ClientId, RedirectUri = RedirectUri })
                 .WithAuthority(AzureCloudInstance.AzurePublic, TenantId)
-                .WithDefaultRedirectUri()
                 .Build();
-            TokenCacheHelper.EnableSerialization(PublicClientApp.UserTokenCache);
+            }
 
             try
             {
+                TokenCacheHelper.EnableSerialization(PublicClientApp.UserTokenCache);
                 authenticationResult = PublicClientApp
                     .AcquireTokenSilent(Scope, PublicClientApp.GetAccountsAsync().Result.FirstOrDefault())
                     .ExecuteAsync().Result;
@@ -97,9 +104,9 @@ namespace netCoreMsalTokenCacheCli
             FormatJsonOutput(authenticationResult);
         }
 
-        private static void FormatJsonOutput(AuthenticationResult authenticationResult)
+        private void FormatJsonOutput(AuthenticationResult authenticationResult)
         {
-            JsonWriterOptions options = new JsonWriterOptions{ Indented = true };
+            JsonWriterOptions options = new JsonWriterOptions { Indented = true };
 
             using (MemoryStream stream = new MemoryStream())
             {
@@ -153,7 +160,6 @@ namespace netCoreMsalTokenCacheCli
             Console.WriteLine($"// tenantID: {TenantId}");
             Console.WriteLine("//");
         }
-
     }
 
     public static class TokenCacheHelper
@@ -164,13 +170,9 @@ namespace netCoreMsalTokenCacheCli
             tokenCache.SetAfterAccess(AfterAccessNotification);
         }
 
-        /// <summary>
-        /// Path to the token cache
-        /// </summary>
         public static readonly string CacheFilePath = System.Reflection.Assembly.GetExecutingAssembly().Location + ".msalcache.bin3";
 
         public static readonly object FileLock = new object();
-
 
         public static void BeforeAccessNotification(TokenCacheNotificationArgs args)
         {
@@ -186,12 +188,10 @@ namespace netCoreMsalTokenCacheCli
 
         public static void AfterAccessNotification(TokenCacheNotificationArgs args)
         {
-            // if the access operation resulted in a cache update
             if (args.HasStateChanged)
             {
                 lock (FileLock)
                 {
-                    // reflect changesgs in the persistent store
                     File.WriteAllBytes(CacheFilePath,
                                         ProtectedData.Protect(args.TokenCache.SerializeMsalV3(),
                                                                 null,
