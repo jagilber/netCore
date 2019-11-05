@@ -57,7 +57,7 @@ namespace netCoreMsalTokenCacheCli
 
             if (Help)
             {
-                Console.WriteLine("// requires -resource argument. optional -redirectUri -clientId -tenantId -scope -detail");
+                Console.WriteLine("// optional arguments --resource --redirectUri --clientId --tenantId --scope --detail");
                 Console.WriteLine("// run from non administrator prompt!");
                 ShowDetail();
                 return;
