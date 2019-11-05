@@ -1,5 +1,5 @@
 ﻿//
-// .netcore 3.0 utility to logon with msal. returns json
+// .netcore 3.0 utility to logon with msal. returns json output
 //
 
 using System;
