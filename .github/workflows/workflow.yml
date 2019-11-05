@@ -1,0 +1,65 @@
+name: CI
+
+env:
+  artifacts_path: netCoreMsalCliTokenCache\bin\release\artifacts
+  release_path: netCoreMsalCliTokenCache\bin\release\netcoreapp3.0
+  project_name: netCoreMsalCliTokenCache
+  github_owner: ${{ github.event.repository.owner.name }}
+
+on:
+  push:
+    branches:
+      - master
+      - preview
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+    - uses: actions/checkout@v1
+
+    - name: environment
+      shell: cmd
+      run: set
+      
+    - name: nuget download
+      shell: cmd
+      run: curl https://dist.nuget.org/win-x86-commandline/latest/nuget.exe --output nuget.exe
+
+    - name: nuget restore
+      shell: cmd
+      run: nuget.exe restore -Verbosity Detailed -NonInteractive -DirectDownload
+
+    - name: nuget build / pack
+      shell: cmd
+      run: nuget.exe pack %project_name%\%project_name%.csproj -Verbosity Detailed -outputdirectory %artifacts_path% -NonInteractive -Build -Properties Configuration=Release
+
+    - name: build output
+      shell: cmd
+      run: dir %release_path% /s
+
+    - name: copy artifacts
+      shell: cmd
+      run: |
+        copy %release_path%\*.exe %artifacts_path%
+        copy %release_path%\*.dll %artifacts_path%
+
+    - name: artifacts output
+      shell: cmd
+      run: dir %artifacts_path% /s
+
+    - name: upload artifacts
+      uses: actions/upload-artifact@v1
+      with:
+        name: Release
+        path: netCoreMsalCliTokenCache\bin\release\artifacts
+
+    - name: upload release
+      shell: powershell
+      run: | 
+        md "$($env:release_path)_upload"
+        copy "$($env:release_path)\*.exe" "$($env:release_path)_upload"
+        copy "$($env:release_path)\*.dll" "$($env:release_path)_upload"
+        compress-archive -path "$($env:release_path)_upload\*" -destinationPath "$($env:release_path)\$($env:project_name).zip" -force
+        scripts\git-upload-release.ps1 -token $env:GITHUB_TOKEN -releaseName $env:project_name -file "$($env:release_path)\$($env:project_name).zip"
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
