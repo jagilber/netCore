@@ -1,4 +1,6 @@
-﻿
+﻿//
+// .netcore 3.0 utility to logon with msal
+//
 
 using System;
 using System.Collections.Generic;
