@@ -2,7 +2,7 @@ name: CI
 
 env:
   artifacts_path: netCoreMsalCliTokenCache\bin\release\artifacts
-  release_path: netCoreMsalCliTokenCache\bin\release\netcoreapp3.0
+  release_path: netCoreMsalCliTokenCache\bin\release\netcoreapp3.0\win-x64\publish
   project_name: netCoreMsalCliTokenCache
   github_owner: ${{ github.event.repository.owner.name }}
 
@@ -23,18 +23,14 @@ jobs:
         set 
         tree /a /f .
       
-    - name: nuget download
+    - name: dotnet restore
       shell: cmd
-      run: curl https://dist.nuget.org/win-x86-commandline/latest/nuget.exe --output nuget.exe
+      run: dotnet restore %project_name%\%project_name%.csproj
 
-    - name: nuget restore
+    - name: dotnet publish
       shell: cmd
-      run: nuget.exe restore %project_name%\%project_name%.csproj -Verbosity Detailed -NonInteractive -DirectDownload
-
-    - name: nuget build / pack
-      shell: cmd
-      run: nuget.exe pack %project_name%\%project_name%.csproj -Verbosity Detailed -outputdirectory %artifacts_path% -NonInteractive -Build -Properties Configuration=Release
-
+      run: dotnet publish %project_name%\%project_name%.csproj -c Release
+    
     - name: build output
       shell: cmd
       run: dir %release_path% /s
