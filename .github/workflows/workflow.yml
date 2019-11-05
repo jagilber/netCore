@@ -27,9 +27,13 @@ jobs:
       shell: cmd
       run: dotnet -d restore %project_name%\%project_name%.csproj
 
+    - name: dotnet build
+      shell: cmd
+      run: dotnet -d build %project_name%\%project_name%.csproj -c Release --no-restore
+    
     - name: dotnet publish
       shell: cmd
-      run: dotnet -d publish %project_name%\%project_name%.csproj -c Release
+      run: dotnet -d publish %project_name%\%project_name%.csproj --no-restore --no-build
     
     - name: build output
       shell: cmd
