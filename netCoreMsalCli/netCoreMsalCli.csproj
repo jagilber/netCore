@@ -8,6 +8,7 @@
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
   </PropertyGroup>
   <ItemGroup>
+    <RuntimeHostConfigurationOption Include="System.Globalization.Invariant" Value="true" />
     <PackageReference Include="Microsoft.Identity.Client" Version="4.5.1" />
   </ItemGroup>
 </Project>
