@@ -25,11 +25,11 @@ jobs:
       
     - name: dotnet restore
       shell: cmd
-      run: dotnet restore %project_name%\%project_name%.csproj
+      run: dotnet -d restore %project_name%\%project_name%.csproj
 
     - name: dotnet publish
       shell: cmd
-      run: dotnet publish %project_name%\%project_name%.csproj -c Release
+      run: dotnet -d publish %project_name%\%project_name%.csproj -c Release
     
     - name: build output
       shell: cmd
@@ -37,9 +37,7 @@ jobs:
 
     - name: copy artifacts
       shell: cmd
-      run: |
-        copy %release_path%\*.exe %artifacts_path%
-        copy %release_path%\*.dll %artifacts_path%
+      run: copy %release_path%\*.exe %artifacts_path%
 
     - name: artifacts output
       shell: cmd
@@ -56,7 +54,6 @@ jobs:
       run: | 
         md "$($env:release_path)_upload"
         copy "$($env:release_path)\*.exe" "$($env:release_path)_upload"
-        copy "$($env:release_path)\*.dll" "$($env:release_path)_upload"
         compress-archive -path "$($env:release_path)_upload\*" -destinationPath "$($env:release_path)\$($env:project_name).zip" -force
         scripts\git-upload-release.ps1 -token $env:GITHUB_TOKEN -releaseName $env:project_name -file "$($env:release_path)\$($env:project_name).zip"
       env:
