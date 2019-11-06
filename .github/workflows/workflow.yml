@@ -25,7 +25,7 @@ jobs:
       
     - name: dotnet publish
       shell: cmd
-      run: dotnet -d publish %project_name%\%project_name%.csproj
+      run: dotnet -d publish %project_name%\%project_name%.csproj -c Release
     
     - name: build output
       shell: cmd
