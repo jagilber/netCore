@@ -1,5 +1,6 @@
 ﻿//
-// .netcore 3.0 commandline utility to logon with msal. returns json output
+// .netcore 3.0 commandline utility to authorize to AAD with msal. 
+// returns AuthenticationResult json output
 //
 
 using System;
@@ -15,22 +16,20 @@ namespace netCoreMsalTokenCacheCli
 {
     internal class Program
     {
-        private string ClientId = "1950a258-227b-4e31-a9cf-717495945fc2";
-        private bool Detail = false;
-        private bool Force = false;
-        private bool Help = false;
-        private IPublicClientApplication PublicClientApp;
-        private string RedirectUri = null; //"http://localhost";
-        private string Resource = null;
-        private string TenantId = "common";
-
-        private List<string> Scope { get; set; } = new List<string>() { ".default" };
+        private string clientId = "1950a258-227b-4e31-a9cf-717495945fc2";
+        private bool detail = false;
+        private bool help = false;
+        private IPublicClientApplication publicClientApp;
+        private string redirectUri = null; //"http://localhost";
+        private string resource = null;
+        private List<string> scopes = new List<string>() { ".default" };
+        private string tenantId = "common";
 
         static void Main(string[] args)
         {
             try
             {
-                new Program().App_Startup(args);
+                new Program().Execute(args);
             }
             catch (Exception e)
             {
@@ -38,26 +37,27 @@ namespace netCoreMsalTokenCacheCli
             }
         }
 
-        private void App_Startup(string[] args)
+        private void Execute(string[] args)
         {
             for (int i = 0; i != args.Length; ++i)
             {
-                string arg = '-' + args[i].ToLower().TrimStart(new char[] { '-', '/' });
-                if (arg == "-resource") { Resource = args[++i]; }
-                if (arg == "-redirecturi") { RedirectUri = args[++i]; }
-                if (arg == "-clientid") { ClientId = args[++i]; }
-                if (arg == "-tenantid") { TenantId = args[++i]; }
-                if (arg == "-force") { Force = true; }
-                if (arg == "-detail") { Detail = true; }
-                if (arg == "-?") { Help = true; }
-                if (arg == "-scope")
+                if (!args[i].StartsWith('/') & !args[i].StartsWith('-')) { continue; }
+
+                string arg = args[i].ToLower().TrimStart(new char[] { '-', '/' });
+                if (arg == "resource") { resource = args[++i]; }
+                if (arg == "redirecturi") { redirectUri = args[++i]; }
+                if (arg == "clientid") { clientId = args[++i]; }
+                if (arg == "tenantid") { tenantId = args[++i]; }
+                if (arg == "detail") { detail = true; }
+                if (arg == "?") { help = true; }
+                if (arg == "scope")
                 {
-                    Scope.Clear();
-                    Scope.AddRange(args[++i].Split(','));
+                    scopes.Clear();
+                    scopes.AddRange(args[++i].Split(','));
                 }
             }
 
-            if (Help)
+            if (help)
             {
                 Console.WriteLine("// optional arguments --resource --redirectUri --clientId --tenantId --scope --detail");
                 Console.WriteLine("// run from non administrator prompt!");
@@ -65,7 +65,7 @@ namespace netCoreMsalTokenCacheCli
                 return;
             }
 
-            if (Detail) { ShowDetail(); }
+            if (detail) { ShowDetail(); }
             Authorize();
         }
 
@@ -73,33 +73,33 @@ namespace netCoreMsalTokenCacheCli
         {
             AuthenticationResult authenticationResult = default;
 
-            if (string.IsNullOrEmpty(RedirectUri))
+            if (string.IsNullOrEmpty(redirectUri))
             {
-                PublicClientApp = PublicClientApplicationBuilder
-                    .Create(ClientId)
-                    .WithAuthority(AzureCloudInstance.AzurePublic, TenantId)
+                publicClientApp = PublicClientApplicationBuilder
+                    .Create(clientId)
+                    .WithAuthority(AzureCloudInstance.AzurePublic, tenantId)
                     .WithDefaultRedirectUri()
                     .Build();
             }
             else
             {
-                PublicClientApp = PublicClientApplicationBuilder
-                .CreateWithApplicationOptions(new PublicClientApplicationOptions { ClientId = ClientId, RedirectUri = RedirectUri })
-                .WithAuthority(AzureCloudInstance.AzurePublic, TenantId)
-                .Build();
+                publicClientApp = PublicClientApplicationBuilder
+                    .CreateWithApplicationOptions(new PublicClientApplicationOptions { ClientId = clientId, RedirectUri = redirectUri })
+                    .WithAuthority(AzureCloudInstance.AzurePublic, tenantId)
+                    .Build();
             }
 
             try
             {
-                TokenCacheHelper.EnableSerialization(PublicClientApp.UserTokenCache);
-                authenticationResult = PublicClientApp
-                    .AcquireTokenSilent(Scope, PublicClientApp.GetAccountsAsync().Result.FirstOrDefault())
+                TokenCacheHelper.EnableSerialization(publicClientApp.UserTokenCache);
+                authenticationResult = publicClientApp
+                    .AcquireTokenSilent(scopes, publicClientApp.GetAccountsAsync().Result.FirstOrDefault())
                     .ExecuteAsync().Result;
             }
             catch (MsalUiRequiredException)
             {
-                authenticationResult = PublicClientApp
-                    .AcquireTokenInteractive(Scope)
+                authenticationResult = publicClientApp
+                    .AcquireTokenInteractive(scopes)
                     .ExecuteAsync().Result;
             }
 
@@ -147,43 +147,39 @@ namespace netCoreMsalTokenCacheCli
                     writer.WriteEndObject();
                 }
 
-                string json = Encoding.UTF8.GetString(stream.ToArray());
-                Console.WriteLine(json);
+                Console.WriteLine(Encoding.UTF8.GetString(stream.ToArray()));
             }
         }
 
         private void ShowDetail()
         {
             Console.WriteLine("//");
-            Console.WriteLine($"// scope: {string.Join(" ", Scope)}");
-            Console.WriteLine($"// resource: {Resource}");
-            Console.WriteLine($"// clientID: {ClientId}");
-            Console.WriteLine($"// RedirectUri: {RedirectUri}");
-            Console.WriteLine($"// tenantID: {TenantId}");
+            Console.WriteLine($"// scope: {string.Join(" ", scopes)}");
+            Console.WriteLine($"// resource: {resource}");
+            Console.WriteLine($"// clientID: {clientId}");
+            Console.WriteLine($"// RedirectUri: {redirectUri}");
+            Console.WriteLine($"// tenantID: {tenantId}");
             Console.WriteLine("//");
         }
     }
 
     public static class TokenCacheHelper
     {
+        private static readonly string CacheFilePath = System.Reflection.Assembly.GetExecutingAssembly().Location + ".msalcache.bin3";
+        private static readonly object FileLock = new object();
+
         public static void EnableSerialization(ITokenCache tokenCache)
         {
             tokenCache.SetBeforeAccess(BeforeAccessNotification);
             tokenCache.SetAfterAccess(AfterAccessNotification);
         }
 
-        public static readonly string CacheFilePath = System.Reflection.Assembly.GetExecutingAssembly().Location + ".msalcache.bin3";
-
-        public static readonly object FileLock = new object();
-
         public static void BeforeAccessNotification(TokenCacheNotificationArgs args)
         {
             lock (FileLock)
             {
                 args.TokenCache.DeserializeMsalV3(File.Exists(CacheFilePath)
-                        ? ProtectedData.Unprotect(File.ReadAllBytes(CacheFilePath),
-                                                  null,
-                                                  DataProtectionScope.CurrentUser)
+                        ? ProtectedData.Unprotect(File.ReadAllBytes(CacheFilePath), null, DataProtectionScope.CurrentUser)
                         : null);
             }
         }
@@ -195,13 +191,9 @@ namespace netCoreMsalTokenCacheCli
                 lock (FileLock)
                 {
                     File.WriteAllBytes(CacheFilePath,
-                                        ProtectedData.Protect(args.TokenCache.SerializeMsalV3(),
-                                                                null,
-                                                                DataProtectionScope.CurrentUser)
-                                        );
+                        ProtectedData.Protect(args.TokenCache.SerializeMsalV3(), null, DataProtectionScope.CurrentUser));
                 }
             }
         }
     }
-
 }
