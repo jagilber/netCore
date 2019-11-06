@@ -7,8 +7,8 @@ netCoreMsalCliTokenCache:
 netCoreMsalCli: netCoreMsalCli/*
   - netCoreMsalCli/**/*
 
-netCoreMsalCli: netCoreAzAdal/*
+netCoreAzAdal: netCoreAzAdal/*
   - netCoreAzAdal/**/*
 
-netCoreMsalCli: netCoreAzAdalCli/*
+netCoreAzAdalCli: netCoreAzAdalCli/*
   - netCoreAzAdalCli/**/*
