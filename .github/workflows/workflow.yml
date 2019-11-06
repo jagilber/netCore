@@ -23,17 +23,9 @@ jobs:
         set 
         tree /a /f .
       
-    - name: dotnet restore
-      shell: cmd
-      run: dotnet -d restore %project_name%\%project_name%.csproj
-
-    - name: dotnet build
-      shell: cmd
-      run: dotnet -d build %project_name%\%project_name%.csproj -c Release --no-restore
-    
     - name: dotnet publish
       shell: cmd
-      run: dotnet -d publish %project_name%\%project_name%.csproj --no-restore --no-build
+      run: dotnet -d publish %project_name%\%project_name%.csproj
     
     - name: build output
       shell: cmd
