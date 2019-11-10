@@ -4,11 +4,11 @@ netCoreMsal:
 netCoreMsalCliTokenCache:
   - netCoreMsalCliTokenCache/**/*
 
-netCoreMsalCli: netCoreMsalCli/*
+netCoreMsalCli: 
   - netCoreMsalCli/**/*
 
-netCoreAzAdal: netCoreAzAdal/*
+netCoreAzAdal: 
   - netCoreAzAdal/**/*
 
-netCoreAzAdalCli: netCoreAzAdalCli/*
+netCoreAzAdalCli:
   - netCoreAzAdalCli/**/*
