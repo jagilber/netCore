@@ -120,10 +120,6 @@ namespace netCoreMsalTokenCacheCli
 
         public class AuthenticationResultJson : AuthenticationResult
         {
-            public AuthenticationResult()
-            {
-                var a = new AuthenticationResult()
-            }
             public AuthenticationResultJson(AuthenticationResult authenticationResult) : base(authenticationResult.AccessToken, authenticationResult.IsExtendedLifeTimeToken, authenticationResult.UniqueId, authenticationResult.ExpiresOn, authenticationResult.ExtendedExpiresOn, authenticationResult.TenantId, authenticationResult.Account, authenticationResult.IdToken, authenticationResult.Scopes, authenticationResult.CorrelationId, "Bearer")
             {
 
