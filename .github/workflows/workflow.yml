@@ -1,9 +1,9 @@
 name: CI netCore
 
 env:
-  artifacts_path: netCoreMsalCliTokenCache\bin\release\artifacts
-  release_path: netCoreMsalCliTokenCache\bin\release\netcoreapp3.0\win-x64\publish
-  project_name: netCoreMsalCliTokenCache
+  artifacts_path: ${{ github.event.repository.name }}\bin\release\artifacts
+  release_path: ${{ github.event.repository.name }}\bin\release\netcoreapp3.0\win-x64\publish
+  project_name: ${{ github.event.repository.name }}
   github_owner: ${{ github.event.repository.owner.name }}
 
 on:
