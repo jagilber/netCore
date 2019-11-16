@@ -100,6 +100,10 @@ namespace netCoreMsal
                     .WithCustomWebUi(customWebUi)
                     .ExecuteAsync();
             }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.ToString());
+            }
 
             FormatJsonOutput(authenticationResult);
             App.Current.Shutdown();

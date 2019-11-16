@@ -92,12 +92,12 @@ namespace netCoreMsal
                     }
                 };
 
-            // test
-            WebViewInstance.ContainsFullScreenElementChanged += (_, e) =>
-            {
-                        Console.WriteLine("ContainsFullScreenElementChanged");
-                        Console.WriteLine(JsonSerializer.Serialize(e, new JsonSerializerOptions() { WriteIndented = true }));
-                    };
+                // test
+                WebViewInstance.ContainsFullScreenElementChanged += (_, e) =>
+                {
+                    Console.WriteLine("ContainsFullScreenElementChanged");
+                    Console.WriteLine(JsonSerializer.Serialize(e, new JsonSerializerOptions() { WriteIndented = true }));
+                };
 
                 WebViewInstance.ContentLoading += (_, e) =>
                 {
@@ -154,9 +154,9 @@ namespace netCoreMsal
                     if (e.Uri.AbsoluteUri.Contains("stsredirect"))
                     {
                         Console.WriteLine("stsredirect");
-                    //webView.Navigate(e.Uri);
-                    //webView.Refresh();
-                }
+                        //webView.Navigate(e.Uri);
+                        //webView.Refresh();
+                    }
 
                 };
 
@@ -189,19 +189,14 @@ namespace netCoreMsal
                     Console.WriteLine("UnviewableContentIdentified");
                     Console.WriteLine(JsonSerializer.Serialize(e, new JsonSerializerOptions() { WriteIndented = true }));
                 };
+                // end test
 
-
-            // end test
-
-            if (Window.ShowDialog() != true && !tcs.Task.IsCompleted)
+                if (Window.ShowDialog() != true && !tcs.Task.IsCompleted)
                 {
                     Console.WriteLine("cancelled");
-                //System.Diagnostics.Debug.WriteLine("cancelled");
-                tcs.SetException(new Exception("canceled"));
+                    //System.Diagnostics.Debug.WriteLine("cancelled");
+                    tcs.SetException(new Exception("canceled"));
                 }
-
-
-
             });
 
             return tcs.Task;
