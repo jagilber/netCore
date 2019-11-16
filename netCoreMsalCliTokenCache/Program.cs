@@ -11,7 +11,6 @@ using System.Text.Json;
 using System.Linq;
 using System.Security.Cryptography;
 using Microsoft.Identity.Client;
-using System.Runtime.Serialization.Json;
 
 namespace netCoreMsalTokenCacheCli
 {
@@ -104,34 +103,7 @@ namespace netCoreMsalTokenCacheCli
                     .ExecuteAsync().Result;
             }
 
-
-            DataContractJsonSerializer dataContractJsonSerializer = new DataContractJsonSerializer(typeof(AuthenticationResultJson));
-            using (MemoryStream stream = new MemoryStream())
-            {
-                dataContractJsonSerializer.WriteObject(stream, new AuthenticationResultJson(authenticationResult).ShallowCopy());
-                Console.WriteLine(Encoding.UTF8.GetString(stream.ToArray()));
-            }
-            //Console.WriteLine((JsonSerializer.Serialize((new AuthenticationResultJson(authenticationResult)).ShallowCopy(), typeof(AuthenticationResultJson), new JsonSerializerOptions { WriteIndented = true, MaxDepth = 99 })));
-            //FormatJsonOutput(authenticationResult);
-            
-        }
-
-        
-
-        public class AuthenticationResultJson : AuthenticationResult
-        {
-            public AuthenticationResultJson(AuthenticationResult authenticationResult) : base(authenticationResult.AccessToken, authenticationResult.IsExtendedLifeTimeToken, authenticationResult.UniqueId, authenticationResult.ExpiresOn, authenticationResult.ExtendedExpiresOn, authenticationResult.TenantId, authenticationResult.Account, authenticationResult.IdToken, authenticationResult.Scopes, authenticationResult.CorrelationId, "Bearer")
-            {
-
-            }
-            public AuthenticationResultJson(string accessToken, bool isExtendedLifeTimeToken, string uniqueId, DateTimeOffset expiresOn, DateTimeOffset extendedExpiresOn, string tenantId, IAccount account, string idToken, IEnumerable<string> scopes, Guid correlationId, string tokenType = "Bearer") : base(accessToken, isExtendedLifeTimeToken, uniqueId, expiresOn, extendedExpiresOn, tenantId, account, idToken, scopes, correlationId, tokenType)
-            {
-            }
-
-            public AuthenticationResultJson ShallowCopy()
-            {
-                return (AuthenticationResultJson)this.MemberwiseClone();
-            }
+            FormatJsonOutput(authenticationResult);
         }
 
         private void FormatJsonOutput(AuthenticationResult authenticationResult)
