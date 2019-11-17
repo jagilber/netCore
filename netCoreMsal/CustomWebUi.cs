@@ -65,13 +65,11 @@ namespace netCoreMsal
                     {
                         App.WriteOutput("navigationcompleted:error");
                         tcs.SetException(new Exception(e.Uri.Query));
-                        Window.DialogResult = false;
                     }
                     else if (e.Uri.Query.Contains("code="))
                     {
                         App.WriteOutput("navigationcompleted:code");
                         tcs.SetResult(e.Uri);
-                        Window.DialogResult = true;
                     }
                 };
 
