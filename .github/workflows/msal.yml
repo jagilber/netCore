@@ -37,7 +37,9 @@ jobs:
 
       - name: copy artifacts
         shell: cmd
-        run: copy %release_path%\*.exe %artifacts_path%
+        run: |
+          md %artifacts_path%
+          copy %release_path%\*.exe %artifacts_path%
 
       - name: artifacts output
         shell: cmd
@@ -66,6 +68,10 @@ jobs:
         with:
           name: Release
           path: ${{ env.release_path }}
+
+      - name: release output
+        shell: cmd
+        run: dir %release_path% /s
 
       - name: prepare release
         shell: powershell
