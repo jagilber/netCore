@@ -17,7 +17,6 @@ on:
 
 jobs:
   build:
-    if: success() && github.event.pull_request.merged == true && github.event.action == 'closed'
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v1
@@ -49,6 +48,24 @@ jobs:
         with:
           name: Release
           path: ${{ env.artifacts_path }}
+
+  release:
+    if: success() && github.event.pull_request.merged == true && github.event.action == 'closed'
+    needs: build
+    runs-on: windows-latest
+    steps:
+      - name: checkout
+        uses: actions/checkout@master
+
+      - name: environment
+        shell: cmd
+        run: set
+
+      - name: download artifact
+        uses: actions/download-artifact@master
+        with:
+          name: Release
+          path: ${{ env.release_path }}
 
       - name: prepare release
         shell: powershell
