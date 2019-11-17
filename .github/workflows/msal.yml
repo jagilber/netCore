@@ -61,8 +61,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: ${{ github.event.repository.name }}-${{ github.sha }}
-          release_name: ${{ github.event.repository.name }}
+          tag_name: ${{ env.project_name }}-${{ github.sha }}
+          release_name: ${{ env.project_name }}
           draft: false
           prerelease: false
 
