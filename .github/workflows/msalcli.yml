@@ -7,7 +7,8 @@ env:
   github_owner: ${{ github.event.repository.owner.name }}
 
 on:
-  push:
+  pull_request:
+    types: [closed, opened]
     branches:
       - master
       - jagilber
@@ -16,6 +17,7 @@ on:
 
 jobs:
   build:
+    if: success() && github.event.pull_request.merged == true && github.event.action == 'closed'
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v1

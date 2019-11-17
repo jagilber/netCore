@@ -1,6 +1,6 @@
 ﻿// ------------------------------------------------------------
 // Licensed under the MIT License (MIT). See License.txt in the repo root for license information.
-// .netcore 3.0 commandline utility to authorize to AAD with msal.
+// .netcore 3.0 commandline utility to authorize to AAD with MSAL.
 // returns AuthenticationResult json output
 // ------------------------------------------------------------
 
