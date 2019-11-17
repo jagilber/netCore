@@ -1,296 +1,171 @@
-﻿using Microsoft.Identity.Client.Extensibility;
+﻿// ------------------------------------------------------------
+// Licensed under the MIT License (MIT). See License.txt in the repo root for license information.
+// ------------------------------------------------------------
+
+using Microsoft.Identity.Client;
+using Microsoft.Identity.Client.Extensibility;
 using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Text;
 using System.Text.Json;
-using System.Threading;
-using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Threading;
-using Microsoft.Toolkit.Wpf.UI.Controls;
-using Microsoft.Identity.Client;
 
 
 //https://docs.microsoft.com/en-us/azure/active-directory/develop/v2-permissions-and-consent#requesting-individual-user-consent
 
 namespace netCoreMsal
 {
-    /// <summary>
-    /// Interaction logic for App.xaml
-    /// </summary>
     public partial class App : Application
     {
-        public static IPublicClientApplication PublicClientApp;
-        public static string ClientId = "1950a258-227b-4e31-a9cf-717495945fc2";
-        public static bool Force = false;
-        public static string RedirectUri = "http://localhost:44321";
-        public static string Resource = null;
-        public static string TenantId = "common";
-
-        public static List<string> Scope { get; set; } = new List<string> { ".default" };//{"kusto.read"};
+        private string clientId = "1950a258-227b-4e31-a9cf-717495945fc2";
+        private static bool detail = false;
+        private bool help = false;
+        private IPublicClientApplication publicClientApp;
+        private string redirectUri = null; //"http://localhost";
+        private string resource = null;
+        private List<string> scopes = new List<string>() { ".default" };
+        private string tenantId = "common";
 
         private void App_Startup(object sender, StartupEventArgs e)
         {
-            Console.WriteLine("app_startup. run from non administrator prompt");
-            if (e.Args.Length < 2)
-            {
-                Console.WriteLine("requires /resource argument. optional /redirectUri /clientId /tenantId");
-                throw new ArgumentException("requires /resource argument. optional /redirectUri /clientId /tenantId");
-            }
-
             for (int i = 0; i != e.Args.Length; ++i)
             {
-                string arg = e.Args[i].ToLower();
-                if (arg.StartsWith('/')) { arg = '-' + arg.TrimStart('/'); }
-                if (arg == "-?") { ShowHelp(); }
-                if (arg == "-resource") { Resource = e.Args[i + 1]; }
-                if (arg == "-redirecturi") { RedirectUri = e.Args[i + 1]; }
-                if (arg == "-clientid") { ClientId = e.Args[i + 1]; }
-                if (arg == "-tenantid") { TenantId = e.Args[i + 1]; }
-                if (arg == "-scope") { Scope.Add(e.Args[i + 1]); }
-                if (arg == "-force") { Force = true; }
+                if (!e.Args[i].StartsWith('/') & !e.Args[i].StartsWith('-')) { continue; }
+
+                string arg = e.Args[i].ToLower().TrimStart(new char[] { '-', '/' });
+                if (arg == "resource") { resource = e.Args[++i]; }
+                if (arg == "redirecturi") { redirectUri = e.Args[++i]; }
+                if (arg == "clientid") { clientId = e.Args[++i]; }
+                if (arg == "tenantid") { tenantId = e.Args[++i]; }
+                if (arg == "detail") { detail = true; }
+                if (arg == "?") { help = true; }
+                if (arg == "scope")
+                {
+                    scopes.Clear();
+                    scopes.AddRange(e.Args[++i].Split(','));
+                }
             }
 
+            if (help)
+            {
+                Console.WriteLine("// optional arguments --resource --redirectUri --clientId --tenantId --scope --detail");
+                Console.WriteLine("// run from non administrator prompt!");
+                ShowDetail();
+                return;
+            }
+
+            if (detail) { ShowDetail(); }
             Authorize();
         }
 
-        private void ShowHelp()
-        {
-            Console.WriteLine("requires -resource argument. optional -redirectUri -clientId -tenantId -scope");
-            App.Current.Shutdown();
-        }
-
-
         private async void Authorize()
         {
-            PublicClientApp = PublicClientApplicationBuilder.Create(App.ClientId)
-                .WithAuthority(AzureCloudInstance.AzurePublic, App.TenantId)
-                //.WithRedirectUri(App.RedirectUri)
-                .WithDefaultRedirectUri()
-                .Build();
-
-            CustomWebUi customWebUi = new CustomWebUi(Dispatcher);
             AuthenticationResult authenticationResult = default;
+            CustomWebUi customWebUi = new CustomWebUi(Dispatcher);
+
+            if (string.IsNullOrEmpty(redirectUri))
+            {
+                publicClientApp = PublicClientApplicationBuilder
+                    .Create(clientId)
+                    .WithAuthority(AzureCloudInstance.AzurePublic, tenantId)
+                    .WithDefaultRedirectUri()
+                    .Build();
+            }
+            else
+            {
+                publicClientApp = PublicClientApplicationBuilder
+                    .CreateWithApplicationOptions(new PublicClientApplicationOptions { ClientId = clientId, RedirectUri = redirectUri })
+                    .WithAuthority(AzureCloudInstance.AzurePublic, tenantId)
+                    .Build();
+            }
 
             try
             {
-                Console.WriteLine($"scope: {App.Scope[0].ToString()}");
-                Console.WriteLine($"resource: {App.Resource}");
-                Console.WriteLine($"clientID: {App.ClientId}");
-                Console.WriteLine($"RedirectUri: {App.RedirectUri}");
-                Console.WriteLine($"tenantID: {App.TenantId}");
-
-                //authenticationResult = await PublicClientApp.AcquireTokenInteractive(App.Scope).WithCustomWebUi(customWebUi).ExecuteAsync(); // works through to phone auth but fails AADSTS65002
-                authenticationResult = await PublicClientApp
-                    .AcquireTokenInteractive(App.Scope)
+                TokenCacheHelper.EnableSerialization(publicClientApp.UserTokenCache);
+                authenticationResult = await publicClientApp
+                    .AcquireTokenSilent(scopes, publicClientApp.GetAccountsAsync().Result.FirstOrDefault())
+                    .ExecuteAsync();
+            }
+            catch (MsalUiRequiredException me)
+            {
+                WriteOutput($"msal ui exception: {me.ToString()}");
+                authenticationResult = await publicClientApp
+                    .AcquireTokenInteractive(scopes)
                     .WithCustomWebUi(customWebUi)
-                    .ExecuteAsync(); // 
+                    .ExecuteAsync();
             }
             catch (Exception e)
             {
-                Console.WriteLine(e.ToString());
+                Console.WriteLine($"exception: {e.ToString()}");
             }
 
-            Console.WriteLine(authenticationResult.AccessToken);
+            FormatJsonOutput(authenticationResult);
             App.Current.Shutdown();
         }
-    }
-    
-    public class CustomWebUi : ICustomWebUi
-    {
-        private readonly Dispatcher _dispatcher;
-        public Microsoft.Toolkit.Win32.UI.Controls.Interop.WinRT.WebViewControlNavigationCompletedEventArgs NavigationCompletedResponse { get; set; }
-        public Uri _uri;
-        public Window Window { get; set; }
-        public WebView WebViewInstance { get; set; } = new WebView();
-        public CustomWebUi(Window window) : this(window.Dispatcher)
+        private void FormatJsonOutput(AuthenticationResult authenticationResult)
         {
-            Window = window;
-        }
+            JsonWriterOptions options = new JsonWriterOptions { Indented = true };
 
-        public CustomWebUi(Dispatcher dispatcher, Uri uri) : this(dispatcher)
-        {
-            _uri = uri;
-        }
-
-        public CustomWebUi(Dispatcher dispatcher)
-        {
-            _dispatcher = dispatcher ?? throw new ArgumentNullException(nameof(dispatcher));
-        }
-
-        public string Authorization { get; set; }
-
-        public Task<Uri> AcquireAuthorizationCodeAsync(Uri authorizationUri, Uri redirectUri, CancellationToken cancellationToken)
-        {
-            TaskCompletionSource<Uri> tcs = new TaskCompletionSource<Uri>();
-            _dispatcher.InvokeAsync(() =>
+            using (MemoryStream stream = new MemoryStream())
             {
-                if (Window == null)
+                using (Utf8JsonWriter writer = new Utf8JsonWriter(stream, options))
                 {
-                    Window = new Window();
+                    writer.WriteStartObject();
+                    writer.WriteString("AccessToken", authenticationResult.AccessToken);
+
+                    writer.WriteStartObject("Account");
+                    writer.WriteString("Environment", authenticationResult.Account.Environment);
+
+                    writer.WriteStartObject("HomeAccountId");
+                    writer.WriteString("Identifier", authenticationResult.Account.HomeAccountId.Identifier);
+                    writer.WriteString("ObjectId", authenticationResult.Account.HomeAccountId.ObjectId);
+                    writer.WriteString("TenantId", authenticationResult.Account.HomeAccountId.TenantId);
+                    writer.WriteEndObject();
+
+                    writer.WriteString("Username", authenticationResult.Account.Username);
+                    writer.WriteEndObject();
+
+                    writer.WriteString("CorrelationId", authenticationResult.CorrelationId);
+                    writer.WriteString("ExpiresOn", authenticationResult.ExpiresOn);
+                    writer.WriteString("ExtendedExpiresOn", authenticationResult.ExtendedExpiresOn);
+                    writer.WriteString("IdToken", authenticationResult.IdToken);
+                    writer.WriteBoolean("IsExtendedLifeTimeToken", authenticationResult.IsExtendedLifeTimeToken);
+
+                    writer.WriteStartArray("Scopes");
+                    foreach (string scope in authenticationResult.Scopes)
+                    {
+                        writer.WriteStringValue(scope);
+                    }
+                    writer.WriteEndArray();
+
+                    writer.WriteString("TenantId", authenticationResult.TenantId);
+                    writer.WriteString("UniqueId", authenticationResult.UniqueId);
+                    writer.WriteEndObject();
                 }
 
-                Window.Title = "Authorization";
-                Window.WindowStyle = WindowStyle.ToolWindow;
-                Window.Content = WebViewInstance;
-                Window.Width = 500;
-                Window.Height = 500;
-                Window.ResizeMode = ResizeMode.CanResizeWithGrip;
-                Window.Loaded += (_, __) => WebViewInstance.Navigate(authorizationUri);
+                Console.WriteLine(Encoding.UTF8.GetString(stream.ToArray()));
+            }
+        }
 
-                WebViewInstance.NavigationCompleted += (_, e) =>
-                {
-                    Console.WriteLine("navigationcompleted");
-                    Console.WriteLine(JsonSerializer.Serialize(e, new JsonSerializerOptions() { WriteIndented = true }));
-                    Console.WriteLine(e.Uri);
+        private void ShowDetail()
+        {
+            Console.WriteLine("//");
+            Console.WriteLine($"// scope: {string.Join(" ", scopes)}");
+            Console.WriteLine($"// resource: {resource}");
+            Console.WriteLine($"// clientID: {clientId}");
+            Console.WriteLine($"// RedirectUri: {redirectUri}");
+            Console.WriteLine($"// tenantID: {tenantId}");
+            Console.WriteLine("//");
+        }
 
-
-                    if (e.Uri.Query.Contains("error="))
-                    {
-                        Console.WriteLine("navigationcompleted:error");
-                        tcs.SetException(new Exception(e.Uri.Query));
-                        Window.DialogResult = false;
-                        Window.Close();
-                    }
-                    else if (e.Uri.Query.Contains("code="))
-                    {
-                        Console.WriteLine("navigationcompleted:code");
-                        tcs.SetResult(e.Uri);
-                        Window.DialogResult = true;
-                        Window.Close();
-                    }
-                };
-
-                WebViewInstance.UnsupportedUriSchemeIdentified += (_, e) =>
-                {
-                    Console.WriteLine("unsupported");
-                    if (e.Uri.Query.Contains("code="))
-                    {
-                        tcs.SetResult(e.Uri);
-                        Window.DialogResult = true;
-                        Window.Close();
-                    }
-                    else
-                    {
-                        Console.WriteLine("unknown error");
-                        tcs.SetException(new Exception($"Unknown error: {e.Uri}"));
-                        Window.DialogResult = false;
-                        Window.Close();
-                    }
-                };
-
-                    // test
-                    WebViewInstance.ContainsFullScreenElementChanged += (_, e) =>
-                        {
-                    Console.WriteLine("ContainsFullScreenElementChanged");
-                    Console.WriteLine(JsonSerializer.Serialize(e, new JsonSerializerOptions() { WriteIndented = true }));
-                };
-
-                WebViewInstance.ContentLoading += (_, e) =>
-                {
-                    Console.WriteLine("ContentLoading");
-                    Console.WriteLine(JsonSerializer.Serialize(e, new JsonSerializerOptions() { WriteIndented = true }));
-                };
-
-                WebViewInstance.DOMContentLoaded += (_, e) =>
-                {
-                    Console.WriteLine("DOMContentLoaded");
-                    Console.WriteLine(JsonSerializer.Serialize(e, new JsonSerializerOptions() { WriteIndented = true }));
-                };
-
-                WebViewInstance.FrameContentLoading += (_, e) =>
-                {
-                    Console.WriteLine("FrameContentLoading");
-                    Console.WriteLine(JsonSerializer.Serialize(e, new JsonSerializerOptions() { WriteIndented = true }));
-                };
-
-                WebViewInstance.FrameDOMContentLoaded += (_, e) =>
-                {
-                    Console.WriteLine("FrameDOMContentLoaded");
-                    Console.WriteLine(JsonSerializer.Serialize(e, new JsonSerializerOptions() { WriteIndented = true }));
-                };
-
-                WebViewInstance.FrameNavigationCompleted += (_, e) =>
-                {
-                    Console.WriteLine("FrameNavigationCompleted");
-                    Console.WriteLine(JsonSerializer.Serialize(e, new JsonSerializerOptions() { WriteIndented = true }));
-                };
-
-                WebViewInstance.FrameNavigationStarting += (_, e) =>
-                {
-                    Console.WriteLine("FrameNavigationStarting");
-                    Console.WriteLine(JsonSerializer.Serialize(e, new JsonSerializerOptions() { WriteIndented = true }));
-                };
-
-                WebViewInstance.LongRunningScriptDetected += (_, e) =>
-                {
-                    Console.WriteLine("LongRunningScriptDetected");
-                    Console.WriteLine(JsonSerializer.Serialize(e, new JsonSerializerOptions() { WriteIndented = true }));
-                };
-
-                WebViewInstance.MoveFocusRequested += (_, e) =>
-                {
-                    Console.WriteLine("MoveFocusRequested");
-                    Console.WriteLine(JsonSerializer.Serialize(e, new JsonSerializerOptions() { WriteIndented = true }));
-                };
-
-                WebViewInstance.NavigationStarting += (_, e) =>
-                {
-                    Console.WriteLine("NavigationStarting");
-                    Console.WriteLine(JsonSerializer.Serialize(e, new JsonSerializerOptions() { WriteIndented = true }));
-                    if (e.Uri.AbsoluteUri.Contains("stsredirect"))
-                    {
-                        Console.WriteLine("stsredirect");
-                            //webView.Navigate(e.Uri);
-                            //webView.Refresh();
-                        }
-
-                };
-
-                WebViewInstance.NewWindowRequested += (_, e) =>
-                {
-                    Console.WriteLine("NewWindowRequested");
-                    Console.WriteLine(JsonSerializer.Serialize(e, new JsonSerializerOptions() { WriteIndented = true }));
-                };
-
-                WebViewInstance.PermissionRequested += (_, e) =>
-                {
-                    Console.WriteLine("PermissionRequested");
-                    Console.WriteLine(JsonSerializer.Serialize(e, new JsonSerializerOptions() { WriteIndented = true }));
-                };
-
-                WebViewInstance.ScriptNotify += (_, e) =>
-                {
-                    Console.WriteLine("ScriptNotify");
-                    Console.WriteLine(JsonSerializer.Serialize(e, new JsonSerializerOptions() { WriteIndented = true }));
-                };
-
-                WebViewInstance.UnsafeContentWarningDisplaying += (_, e) =>
-                {
-                    Console.WriteLine("UnsafeContentWarningDisplaying");
-                    Console.WriteLine(JsonSerializer.Serialize(e, new JsonSerializerOptions() { WriteIndented = true }));
-                };
-
-                WebViewInstance.UnviewableContentIdentified += (_, e) =>
-                {
-                    Console.WriteLine("UnviewableContentIdentified");
-                    Console.WriteLine(JsonSerializer.Serialize(e, new JsonSerializerOptions() { WriteIndented = true }));
-                };
-
-
-                    // end test
-
-                    if (Window.ShowDialog() != true && !tcs.Task.IsCompleted)
-                {
-                    Console.WriteLine("cancelled");
-                        //System.Diagnostics.Debug.WriteLine("cancelled");
-                        tcs.SetException(new Exception("canceled"));
-                }
-
-
-
-            });
-
-            return tcs.Task;
+        public static void WriteOutput(string output)
+        {
+            if (detail)
+            {
+                Console.WriteLine(output);
+            }
         }
     }
 }

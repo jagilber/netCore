@@ -1,4 +1,4 @@
-name: CI netCore
+name: CI netCoreMsaclCli
 
 env:
   artifacts_path: netCoreMsalCliTokenCache\bin\release\artifacts
@@ -10,7 +10,10 @@ on:
   push:
     branches:
       - master
-      - preview
+      - jagilber
+    paths:
+      - "netCoreMsalCliTokenCache/**"
+
 jobs:
   build:
     runs-on: windows-latest
@@ -43,14 +46,33 @@ jobs:
       uses: actions/upload-artifact@v1
       with:
         name: Release
-        path: netCoreMsalCliTokenCache\bin\release\artifacts
+        path: ${{ env.artifacts_path }}
 
-    - name: upload release
+    - name: prepare release
       shell: powershell
       run: | 
         md "$($env:release_path)_upload"
         copy "$($env:release_path)\*.exe" "$($env:release_path)_upload"
         compress-archive -path "$($env:release_path)_upload\*" -destinationPath "$($env:release_path)\$($env:project_name).zip" -force
-        scripts\git-upload-release.ps1 -token $env:GITHUB_TOKEN -releaseName $env:project_name -file "$($env:release_path)\$($env:project_name).zip"
+
+    - name: create release
+      id: create_release
+      uses: actions/create-release@master
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ github.event.repository.name }}-${{ github.sha }}
+        release_name: ${{ github.event.repository.name }}
+        draft: false
+        prerelease: false
+
+    - name: upload release asset
+      id: upload-release-asset
+      uses: actions/upload-release-asset@master
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: .\${{ env.release_path }}\${{ env.project_name }}.zip
+        asset_name: ${{ env.project_name }}.zip
+        asset_content_type: application/zip
