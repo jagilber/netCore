@@ -93,8 +93,9 @@ namespace netCoreMsal
                     .AcquireTokenSilent(scopes, publicClientApp.GetAccountsAsync().Result.FirstOrDefault())
                     .ExecuteAsync();
             }
-            catch (MsalUiRequiredException)
+            catch (MsalUiRequiredException me)
             {
+                Console.WriteLine($"msal ui exception: {me.ToString()}");
                 authenticationResult = await publicClientApp
                     .AcquireTokenInteractive(scopes)
                     .WithCustomWebUi(customWebUi)
@@ -102,46 +103,13 @@ namespace netCoreMsal
             }
             catch (Exception e)
             {
-                Console.WriteLine(e.ToString());
+                Console.WriteLine($"exception: {e.ToString()}");
             }
 
             FormatJsonOutput(authenticationResult);
+            Console.WriteLine("shutting down");
             App.Current.Shutdown();
         }
-        private async void AuthorizeOld()
-        {
-            publicClientApp = PublicClientApplicationBuilder.Create(clientId)
-                .WithAuthority(AzureCloudInstance.AzurePublic, tenantId)
-                //.WithRedirectUri(App.RedirectUri)
-                .WithDefaultRedirectUri()
-                .Build();
-
-            CustomWebUi customWebUi = new CustomWebUi(Dispatcher);
-            AuthenticationResult authenticationResult = default;
-
-            try
-            {
-                Console.WriteLine($"scope: {scopes[0].ToString()}");
-                Console.WriteLine($"resource: {resource}");
-                Console.WriteLine($"clientID: {clientId}");
-                Console.WriteLine($"RedirectUri: {redirectUri}");
-                Console.WriteLine($"tenantID: {tenantId}");
-
-                //authenticationResult = await PublicClientApp.AcquireTokenInteractive(App.Scope).WithCustomWebUi(customWebUi).ExecuteAsync(); // works through to phone auth but fails AADSTS65002
-                authenticationResult = await publicClientApp
-                    .AcquireTokenInteractive(scopes)
-                    .WithCustomWebUi(customWebUi)
-                    .ExecuteAsync(); // 
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine(e.ToString());
-            }
-
-            Console.WriteLine(authenticationResult.AccessToken);
-            App.Current.Shutdown();
-        }
-
         private void FormatJsonOutput(AuthenticationResult authenticationResult)
         {
             JsonWriterOptions options = new JsonWriterOptions { Indented = true };

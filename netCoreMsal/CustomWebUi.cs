@@ -55,22 +55,20 @@ namespace netCoreMsal
                 {
                     Console.WriteLine("navigationcompleted");
                     Console.WriteLine(JsonSerializer.Serialize(e, new JsonSerializerOptions() { WriteIndented = true }));
-                    Console.WriteLine(e.Uri);
-
 
                     if (e.Uri.Query.Contains("error="))
                     {
                         Console.WriteLine("navigationcompleted:error");
                         tcs.SetException(new Exception(e.Uri.Query));
                         Window.DialogResult = false;
-                        Window.Close();
+                        //Window.Close();
                     }
                     else if (e.Uri.Query.Contains("code="))
                     {
                         Console.WriteLine("navigationcompleted:code");
                         tcs.SetResult(e.Uri);
                         Window.DialogResult = true;
-                        Window.Close();
+                        //Window.Close();
                     }
                 };
 
