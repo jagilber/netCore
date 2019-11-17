@@ -67,14 +67,12 @@ namespace netCoreMsal
                         App.WriteOutput("navigationcompleted:error");
                         tcs.SetException(new Exception(e.Uri.Query));
                         Window.DialogResult = false;
-                        //Window.Close();
                     }
                     else if (e.Uri.Query.Contains("code="))
                     {
                         App.WriteOutput("navigationcompleted:code");
                         tcs.SetResult(e.Uri);
                         Window.DialogResult = true;
-                        //Window.Close();
                     }
                 };
 
@@ -85,18 +83,16 @@ namespace netCoreMsal
                     {
                         tcs.SetResult(e.Uri);
                         Window.DialogResult = true;
-                        Window.Close();
                     }
                     else
                     {
                         App.WriteOutput("unknown error");
                         tcs.SetException(new Exception($"Unknown error: {e.Uri}"));
                         Window.DialogResult = false;
-                        Window.Close();
                     }
                 };
 
-                // test
+                // debug
                 WebViewInstance.ContainsFullScreenElementChanged += (_, e) =>
                 {
                     App.WriteOutput("ContainsFullScreenElementChanged");
@@ -155,12 +151,6 @@ namespace netCoreMsal
                 {
                     App.WriteOutput("NavigationStarting");
                     App.WriteOutput(JsonSerializer.Serialize(e, new JsonSerializerOptions() { WriteIndented = true }));
-                    if (e.Uri.AbsoluteUri.Contains("stsredirect"))
-                    {
-                        App.WriteOutput("stsredirect");
-                        //webView.Navigate(e.Uri);
-                        //webView.Refresh();
-                    }
                 };
 
                 WebViewInstance.NewWindowRequested += (_, e) =>
@@ -192,12 +182,11 @@ namespace netCoreMsal
                     App.WriteOutput("UnviewableContentIdentified");
                     App.WriteOutput(JsonSerializer.Serialize(e, new JsonSerializerOptions() { WriteIndented = true }));
                 };
-                // end test
+                // end debug
 
                 if (Window.ShowDialog() != true && !tcs.Task.IsCompleted)
                 {
                     App.WriteOutput("cancelled");
-                    //System.Diagnostics.Debug.WriteLine("cancelled");
                     tcs.SetException(new Exception("canceled"));
                 }
             });
