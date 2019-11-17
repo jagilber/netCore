@@ -19,7 +19,7 @@ namespace netCoreMsal
     public partial class App : Application
     {
         private string clientId = "1950a258-227b-4e31-a9cf-717495945fc2";
-        private bool detail = false;
+        private static bool detail = false;
         private bool help = false;
         private IPublicClientApplication publicClientApp;
         private string redirectUri = null; //"http://localhost";
@@ -59,12 +59,6 @@ namespace netCoreMsal
             Authorize();
         }
 
-        private void ShowHelp()
-        {
-            Console.WriteLine("requires -resource argument. optional -redirectUri -clientId -tenantId -scope");
-            App.Current.Shutdown();
-        }
-
         private async void Authorize()
         {
             AuthenticationResult authenticationResult = default;
@@ -95,7 +89,7 @@ namespace netCoreMsal
             }
             catch (MsalUiRequiredException me)
             {
-                Console.WriteLine($"msal ui exception: {me.ToString()}");
+                WriteOutput($"msal ui exception: {me.ToString()}");
                 authenticationResult = await publicClientApp
                     .AcquireTokenInteractive(scopes)
                     .WithCustomWebUi(customWebUi)
@@ -107,7 +101,6 @@ namespace netCoreMsal
             }
 
             FormatJsonOutput(authenticationResult);
-            Console.WriteLine("shutting down");
             App.Current.Shutdown();
         }
         private void FormatJsonOutput(AuthenticationResult authenticationResult)
@@ -164,6 +157,14 @@ namespace netCoreMsal
             Console.WriteLine($"// RedirectUri: {redirectUri}");
             Console.WriteLine($"// tenantID: {tenantId}");
             Console.WriteLine("//");
+        }
+
+        public static void WriteOutput(string output)
+        {
+            if (detail)
+            {
+                Console.WriteLine(output);
+            }
         }
     }
 }
