@@ -1,4 +1,4 @@
-name: CI netCore
+name: CI netCoreMsal
 
 env:
   artifacts_path: netCoreMsal\bin\release\artifacts
