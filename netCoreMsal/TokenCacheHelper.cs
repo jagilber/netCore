@@ -1,7 +1,6 @@
-//
-// .netcore 3.0 commandline utility to authorize to AAD with msal. 
-// returns AuthenticationResult json output
-//
+// ------------------------------------------------------------
+// Licensed under the MIT License (MIT). See License.txt in the repo root for license information.
+// ------------------------------------------------------------
 
 using Microsoft.Identity.Client;
 using System.IO;

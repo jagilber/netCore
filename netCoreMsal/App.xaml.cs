@@ -1,4 +1,8 @@
-﻿using Microsoft.Identity.Client;
+﻿// ------------------------------------------------------------
+// Licensed under the MIT License (MIT). See License.txt in the repo root for license information.
+// ------------------------------------------------------------
+
+using Microsoft.Identity.Client;
 using Microsoft.Identity.Client.Extensibility;
 using System;
 using System.Collections.Generic;
@@ -13,9 +17,6 @@ using System.Windows;
 
 namespace netCoreMsal
 {
-    /// <summary>
-    /// Interaction logic for App.xaml
-    /// </summary>
     public partial class App : Application
     {
         private string clientId = "1950a258-227b-4e31-a9cf-717495945fc2";
