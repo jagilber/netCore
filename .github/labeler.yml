@@ -1,14 +1,11 @@
-netCoreMsal:
+netCoreMsalNoCache:
+  - netCoreMsalNoCache/**/*
+
+netCoreMsalWebUi:
+  - netCoreMsalWebUi/**/*
+
+netCoreMsal: 
   - netCoreMsal/**/*
-
-netCoreMsalCliTokenCache:
-  - netCoreMsalCliTokenCache/**/*
-
-netCoreMsalCli: 
-  - netCoreMsalCli/**/*
 
 netCoreAzAdal: 
   - netCoreAzAdal/**/*
-
-netCoreAzAdalCli:
-  - netCoreAzAdalCli/**/*
