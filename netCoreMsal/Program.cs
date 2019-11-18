@@ -10,10 +10,9 @@ using System.IO;
 using System.Text;
 using System.Text.Json;
 using System.Linq;
-using System.Security.Cryptography;
 using Microsoft.Identity.Client;
 
-namespace netCoreMsalTokenCacheCli
+namespace netCoreMsal
 {
     internal class Program
     {
@@ -161,40 +160,6 @@ namespace netCoreMsalTokenCacheCli
             Console.WriteLine($"// RedirectUri: {redirectUri}");
             Console.WriteLine($"// tenantID: {tenantId}");
             Console.WriteLine("//");
-        }
-    }
-
-    public static class TokenCacheHelper
-    {
-        private static readonly string CacheFilePath = System.Reflection.Assembly.GetExecutingAssembly().Location + ".msalcache.bin3";
-        private static readonly object FileLock = new object();
-
-        public static void EnableSerialization(ITokenCache tokenCache)
-        {
-            tokenCache.SetBeforeAccess(BeforeAccessNotification);
-            tokenCache.SetAfterAccess(AfterAccessNotification);
-        }
-
-        public static void BeforeAccessNotification(TokenCacheNotificationArgs args)
-        {
-            lock (FileLock)
-            {
-                args.TokenCache.DeserializeMsalV3(File.Exists(CacheFilePath)
-                        ? ProtectedData.Unprotect(File.ReadAllBytes(CacheFilePath), null, DataProtectionScope.CurrentUser)
-                        : null);
-            }
-        }
-
-        public static void AfterAccessNotification(TokenCacheNotificationArgs args)
-        {
-            if (args.HasStateChanged)
-            {
-                lock (FileLock)
-                {
-                    File.WriteAllBytes(CacheFilePath,
-                        ProtectedData.Protect(args.TokenCache.SerializeMsalV3(), null, DataProtectionScope.CurrentUser));
-                }
-            }
         }
     }
 }

@@ -1,8 +1,14 @@
-﻿
+﻿// ------------------------------------------------------------
+// Licensed under the MIT License (MIT). See License.txt in the repo root for license information.
+// .netcore 3.0 commandline utility to authorize to AAD with MSAL.
+// returns AuthenticationResult json output
+// ------------------------------------------------------------
 
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Text;
+using System.Text.Json;
 using System.Linq;
 using Microsoft.Identity.Client;
 
@@ -10,20 +16,20 @@ namespace netCoreMsalNoCache
 {
     internal class Program
     {
-        public static string ClientId = "1950a258-227b-4e31-a9cf-717495945fc2";
-        public static bool Force = false;
-        public static IPublicClientApplication PublicClientApp;
-        public static string RedirectUri = "http://localhost";
-        public static string Resource = null;
-        public static string TenantId = "common";
+        private string clientId = "1950a258-227b-4e31-a9cf-717495945fc2";
+        private bool detail = false;
+        private bool help = false;
+        private IPublicClientApplication publicClientApp;
+        private string redirectUri = null; //"http://localhost";
+        private string resource = null;
+        private List<string> scopes = new List<string>() { ".default" };
+        private string tenantId = "common";
 
-        public static List<string> Scope { get; set; } = new List<string>();
-
-        private static void Main(string[] args)
+        static void Main(string[] args)
         {
             try
             {
-                new Program().App_Startup(args);
+                new Program().Execute(args);
             }
             catch (Exception e)
             {
@@ -31,70 +37,128 @@ namespace netCoreMsalNoCache
             }
         }
 
-        private void App_Startup(string[] args)
+        private void Execute(string[] args)
         {
             for (int i = 0; i != args.Length; ++i)
             {
-                string arg = args[i].ToLower();
-                if (arg.StartsWith('/')) { arg = '-' + arg.TrimStart('/'); }
-                if (arg == "-?") { ShowHelp(); }
-                if (arg == "-resource") { Resource = args[i + 1]; }
-                if (arg == "-redirecturi") { RedirectUri = args[i + 1]; }
-                if (arg == "-clientid") { ClientId = args[i + 1]; }
-                if (arg == "-tenantid") { TenantId = args[i + 1]; }
-                if (arg == "-scope") { Scope.Add(args[i + 1]); }
-                if (arg == "-force") { Force = true; }
+                if (!args[i].StartsWith('/') & !args[i].StartsWith('-')) { continue; }
+
+                string arg = args[i].ToLower().TrimStart(new char[] { '-', '/' });
+                if (arg == "resource") { resource = args[++i]; }
+                if (arg == "redirecturi") { redirectUri = args[++i]; }
+                if (arg == "clientid") { clientId = args[++i]; }
+                if (arg == "tenantid") { tenantId = args[++i]; }
+                if (arg == "detail") { detail = true; }
+                if (arg == "?") { help = true; }
+                if (arg == "scope")
+                {
+                    scopes.Clear();
+                    scopes.AddRange(args[++i].Split(','));
+                }
             }
 
-            if (Scope.Count < 1)
+            if (help)
             {
-                Scope.Add(".default");
+                Console.WriteLine("// optional arguments --resource --redirectUri --clientId --tenantId --scope --detail");
+                Console.WriteLine("// run from non administrator prompt!");
+                ShowDetail();
+                return;
             }
 
-            if (args.Length < 2)
-            {
-                ShowHelp();
-            }
-
+            if (detail) { ShowDetail(); }
             Authorize();
         }
 
         private void Authorize()
         {
             AuthenticationResult authenticationResult = default;
-            PublicClientApp = PublicClientApplicationBuilder
-                .Create(ClientId)
-                .WithAuthority(AzureCloudInstance.AzurePublic, TenantId)
-                .WithDefaultRedirectUri()
-                .Build();
+
+            if (string.IsNullOrEmpty(redirectUri))
+            {
+                publicClientApp = PublicClientApplicationBuilder
+                    .Create(clientId)
+                    .WithAuthority(AzureCloudInstance.AzurePublic, tenantId)
+                    .WithDefaultRedirectUri()
+                    .Build();
+            }
+            else
+            {
+                publicClientApp = PublicClientApplicationBuilder
+                    .CreateWithApplicationOptions(new PublicClientApplicationOptions { ClientId = clientId, RedirectUri = redirectUri })
+                    .WithAuthority(AzureCloudInstance.AzurePublic, tenantId)
+                    .Build();
+            }
 
             try
             {
-                authenticationResult = PublicClientApp
-                    .AcquireTokenSilent(Scope, PublicClientApp.GetAccountsAsync().Result.FirstOrDefault())
+                authenticationResult = publicClientApp
+                    .AcquireTokenSilent(scopes, publicClientApp.GetAccountsAsync().Result.FirstOrDefault())
                     .ExecuteAsync().Result;
             }
             catch (MsalUiRequiredException)
             {
-                authenticationResult = PublicClientApp
-                    .AcquireTokenInteractive(Scope)
+                authenticationResult = publicClientApp
+                    .AcquireTokenInteractive(scopes)
                     .ExecuteAsync().Result;
             }
 
-            Console.WriteLine(authenticationResult.AccessToken);
+            FormatJsonOutput(authenticationResult);
         }
 
-        private void ShowHelp()
+        private void FormatJsonOutput(AuthenticationResult authenticationResult)
         {
-            Console.WriteLine($"scope: {Scope[0].ToString()}");
-            Console.WriteLine($"resource: {Resource}");
-            Console.WriteLine($"clientID: {ClientId}");
-            Console.WriteLine($"RedirectUri: {RedirectUri}");
-            Console.WriteLine($"tenantID: {TenantId}");
-            Console.WriteLine("");
-            Console.WriteLine("requires -resource argument. optional -redirectUri -clientId -tenantId -scope");
-            Console.WriteLine("run from non administrator prompt!");
+            JsonWriterOptions options = new JsonWriterOptions { Indented = true };
 
+            using (MemoryStream stream = new MemoryStream())
+            {
+                using (Utf8JsonWriter writer = new Utf8JsonWriter(stream, options))
+                {
+                    writer.WriteStartObject();
+                    writer.WriteString("AccessToken", authenticationResult.AccessToken);
+
+                    writer.WriteStartObject("Account");
+                    writer.WriteString("Environment", authenticationResult.Account.Environment);
+
+                    writer.WriteStartObject("HomeAccountId");
+                    writer.WriteString("Identifier", authenticationResult.Account.HomeAccountId.Identifier);
+                    writer.WriteString("ObjectId", authenticationResult.Account.HomeAccountId.ObjectId);
+                    writer.WriteString("TenantId", authenticationResult.Account.HomeAccountId.TenantId);
+                    writer.WriteEndObject();
+
+                    writer.WriteString("Username", authenticationResult.Account.Username);
+                    writer.WriteEndObject();
+
+                    writer.WriteString("CorrelationId", authenticationResult.CorrelationId);
+                    writer.WriteString("ExpiresOn", authenticationResult.ExpiresOn);
+                    writer.WriteString("ExtendedExpiresOn", authenticationResult.ExtendedExpiresOn);
+                    writer.WriteString("IdToken", authenticationResult.IdToken);
+                    writer.WriteBoolean("IsExtendedLifeTimeToken", authenticationResult.IsExtendedLifeTimeToken);
+
+                    writer.WriteStartArray("Scopes");
+                    foreach (string scope in authenticationResult.Scopes)
+                    {
+                        writer.WriteStringValue(scope);
+                    }
+                    writer.WriteEndArray();
+
+                    writer.WriteString("TenantId", authenticationResult.TenantId);
+                    writer.WriteString("UniqueId", authenticationResult.UniqueId);
+                    writer.WriteEndObject();
+                }
+
+                Console.WriteLine(Encoding.UTF8.GetString(stream.ToArray()));
+            }
+        }
+
+        private void ShowDetail()
+        {
+            Console.WriteLine("//");
+            Console.WriteLine($"// scope: {string.Join(" ", scopes)}");
+            Console.WriteLine($"// resource: {resource}");
+            Console.WriteLine($"// clientID: {clientId}");
+            Console.WriteLine($"// RedirectUri: {redirectUri}");
+            Console.WriteLine($"// tenantID: {tenantId}");
+            Console.WriteLine("//");
         }
     }
 }
