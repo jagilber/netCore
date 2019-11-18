@@ -17,7 +17,7 @@ using System.Windows;
 
 //https://docs.microsoft.com/en-us/azure/active-directory/develop/v2-permissions-and-consent#requesting-individual-user-consent
 
-namespace netCoreMsal
+namespace netCoreMsalWebUi
 {
     public partial class App : Application
     {

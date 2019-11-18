@@ -6,7 +6,7 @@ using Microsoft.Identity.Client;
 using System.IO;
 using System.Security.Cryptography;
 
-namespace netCoreMsal
+namespace netCoreMsalWebUi
 {
     public static class TokenCacheHelper
     {
