@@ -6,7 +6,7 @@ using System.IO;
 using System.Linq;
 using Microsoft.Identity.Client;
 
-namespace netCoreMsalCli
+namespace netCoreMsalNoCache
 {
     internal class Program
     {
