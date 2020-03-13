@@ -32,7 +32,7 @@ namespace netCoreMsal
 
         public void MsalLoggerCallback(LogLevel level, string message, bool containsPII)
         {
-            Console.WriteLine($"//{DateTime.Now} {level} {containsPII} {message}");
+            Console.WriteLine($"// {DateTime.Now} {level} {containsPII} {message}");
         }
 
         private static void Main(string[] args)
@@ -53,7 +53,6 @@ namespace netCoreMsal
             {
                 if (string.IsNullOrEmpty(clientSecret))
                 {
-                    Console.WriteLine("here1");
                     publicClientApp = PublicClientApplicationBuilder
                         .Create(clientId)
                         .WithAuthority(AzureCloudInstance.AzurePublic, tenantId)
@@ -73,6 +72,17 @@ namespace netCoreMsal
                     //{
                     //    securePwd.AppendChar(c);
                     //}
+
+                    Console.WriteLine($"// adding resource {resource} to scope");
+                    List<string> newScopes = new List<string>();
+
+                    foreach (string scope in scopes)
+                    {
+                        newScopes.Add($"{resource}/{scope}");
+                    }
+
+                    scopes = newScopes;
+
                     if (string.IsNullOrEmpty(clientName))
                     {
                         clientName = clientId;
@@ -159,15 +169,15 @@ namespace netCoreMsal
                     writer.WriteString("AccessToken", authenticationResult.AccessToken);
 
                     writer.WriteStartObject("Account");
-                    writer.WriteString("Environment", authenticationResult.Account.Environment);
+                    writer.WriteString("Environment", authenticationResult.Account?.Environment);
 
                     writer.WriteStartObject("HomeAccountId");
-                    writer.WriteString("Identifier", authenticationResult.Account.HomeAccountId.Identifier);
-                    writer.WriteString("ObjectId", authenticationResult.Account.HomeAccountId.ObjectId);
-                    writer.WriteString("TenantId", authenticationResult.Account.HomeAccountId.TenantId);
+                    writer.WriteString("Identifier", authenticationResult.Account?.HomeAccountId.Identifier);
+                    writer.WriteString("ObjectId", authenticationResult.Account?.HomeAccountId.ObjectId);
+                    writer.WriteString("TenantId", authenticationResult.Account?.HomeAccountId.TenantId);
                     writer.WriteEndObject();
 
-                    writer.WriteString("Username", authenticationResult.Account.Username);
+                    writer.WriteString("Username", authenticationResult.Account?.Username);
                     writer.WriteEndObject();
 
                     writer.WriteString("CorrelationId", authenticationResult.CorrelationId);
