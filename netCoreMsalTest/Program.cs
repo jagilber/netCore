@@ -108,7 +108,7 @@ namespace netCoreMsal
                 Console.WriteLine($"{e}");
             }
 
-            Console.WriteLine($"{JsonSerializer.Serialize(authenticationResult)}");
+            //Console.WriteLine($"{JsonSerializer.Serialize(authenticationResult)}");
 
             FormatJsonOutput(authenticationResult);
         }
