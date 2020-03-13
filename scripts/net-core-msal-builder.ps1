@@ -1,5 +1,5 @@
 # script to build .net core msal projects on .net core 3.1 lts
-# not working. project may need to be updated to 3.1 or this to 3.0
+# not working. project may need to be updated to 3.1 or this to 3.1
 param(
     [string]$localProjectPath = "$env:temp\netCoreMsal",
     [string]$msalProject = "https://raw.githubusercontent.com/jagilber/netCore/master/netCoreMsal",

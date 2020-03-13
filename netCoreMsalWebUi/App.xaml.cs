@@ -1,6 +1,6 @@
 ﻿// ------------------------------------------------------------
 // Licensed under the MIT License (MIT). See License.txt in the repo root for license information.
-// .netcore 3.0 commandline utility with customwebui to authorize to AAD with MSAL.
+// .netcore 3.1 commandline utility with customwebui to authorize to AAD with MSAL.
 // returns AuthenticationResult json output
 // ------------------------------------------------------------
 
