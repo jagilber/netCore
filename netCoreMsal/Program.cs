@@ -37,6 +37,11 @@ namespace netCoreMsal
             }
         }
 
+        public void MsalLoggerCallback(LogLevel level, string message, bool containsPII)
+        {
+            Console.WriteLine($"//{DateTime.Now} {level} {containsPII} {message}");
+        }
+
         private void Execute(string[] args)
         {
             for (int i = 0; i != args.Length; ++i)
@@ -79,6 +84,7 @@ namespace netCoreMsal
                     .Create(clientId)
                     .WithAuthority(AzureCloudInstance.AzurePublic, tenantId)
                     .WithDefaultRedirectUri()
+                    .WithLogging(MsalLoggerCallback, LogLevel.Verbose, true, true)
                     .Build();
             }
             else
@@ -86,12 +92,14 @@ namespace netCoreMsal
                 publicClientApp = PublicClientApplicationBuilder
                     .CreateWithApplicationOptions(new PublicClientApplicationOptions { ClientId = clientId, RedirectUri = redirectUri })
                     .WithAuthority(AzureCloudInstance.AzurePublic, tenantId)
+                    .WithLogging(MsalLoggerCallback, LogLevel.Verbose, true, true)
                     .Build();
             }
 
             try
             {
                 TokenCacheHelper.EnableSerialization(publicClientApp.UserTokenCache);
+                
                 authenticationResult = publicClientApp
                     .AcquireTokenSilent(scopes, publicClientApp.GetAccountsAsync().Result.FirstOrDefault())
                     .ExecuteAsync().Result;
