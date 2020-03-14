@@ -26,7 +26,7 @@ namespace netCoreMsal
         private bool detail = false;
         private bool help = false;
         private IPublicClientApplication publicClientApp;
-        private string redirectUri = null; //"http://localhost";
+        private string redirectUri = null;
         private string resource = null;
         private List<string> scopes = new List<string>();
         private string tenantId = "common";
