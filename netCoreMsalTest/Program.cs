@@ -22,12 +22,13 @@ namespace netCoreMsal
         private string clientName = null;
         private string clientSecret = null;
         private IConfidentialClientApplication confidentialClientApp;
+        private List<string> defaultScope = new List<string>() { ".default" };
         private bool detail = false;
         private bool help = false;
         private IPublicClientApplication publicClientApp;
         private string redirectUri = null; //"http://localhost";
         private string resource = null;
-        private List<string> scopes = new List<string>() { ".default" };
+        private List<string> scopes = new List<string>();// { ".default" };
         private string tenantId = "common";
 
         public void MsalLoggerCallback(LogLevel level, string message, bool containsPII)
@@ -51,8 +52,19 @@ namespace netCoreMsal
         {
             try
             {
+                Console.WriteLine($"// adding resource {resource} to scope");
+                List<string> newScopes = new List<string>();
+
+                foreach (string scope in scopes)
+                {
+                    newScopes.Add($"{resource}/{scope}");
+                }
+
+                scopes = newScopes;
+
                 if (string.IsNullOrEmpty(clientSecret))
                 {
+                    // user creds 
                     publicClientApp = PublicClientApplicationBuilder
                         .Create(clientId)
                         .WithAuthority(AzureCloudInstance.AzurePublic, tenantId)
@@ -62,27 +74,12 @@ namespace netCoreMsal
 
                     TokenCacheHelper.EnableSerialization(publicClientApp.UserTokenCache);
                     authenticationResult = publicClientApp
-                        .AcquireTokenSilent(scopes, publicClientApp.GetAccountsAsync().Result.FirstOrDefault())
+                        .AcquireTokenSilent(defaultScope, publicClientApp.GetAccountsAsync().Result.FirstOrDefault())
                         .ExecuteAsync().Result;
                 }
                 else
                 {
-                    //SecureString securePwd = new SecureString();
-                    //foreach (Char c in clientId.ToCharArray())
-                    //{
-                    //    securePwd.AppendChar(c);
-                    //}
-
-                    Console.WriteLine($"// adding resource {resource} to scope");
-                    List<string> newScopes = new List<string>();
-
-                    foreach (string scope in scopes)
-                    {
-                        newScopes.Add($"{resource}/{scope}");
-                    }
-
-                    scopes = newScopes;
-
+                    // client creds
                     if (string.IsNullOrEmpty(clientName))
                     {
                         clientName = clientId;
@@ -103,14 +100,14 @@ namespace netCoreMsal
 
                     TokenCacheHelper.EnableSerialization(confidentialClientApp.UserTokenCache);
                     authenticationResult = confidentialClientApp
-                        .AcquireTokenForClient(scopes)
+                        .AcquireTokenForClient(scopes.Count > 0 ? scopes : defaultScope)
                         .ExecuteAsync().Result;
                 }
             }
             catch (MsalUiRequiredException)
             {
                 authenticationResult = publicClientApp
-                    .AcquireTokenInteractive(scopes)
+                    .AcquireTokenInteractive(defaultScope)
                     .ExecuteAsync().Result;
             }
             catch (Exception e)
@@ -118,8 +115,14 @@ namespace netCoreMsal
                 Console.WriteLine($"{e}");
             }
 
-            //Console.WriteLine($"{JsonSerializer.Serialize(authenticationResult)}");
+            if (scopes.Count > 0)
+            {
+                authenticationResult = publicClientApp
+                    .AcquireTokenSilent(scopes, publicClientApp.GetAccountsAsync().Result.FirstOrDefault())
+                    .ExecuteAsync().Result;
+            }
 
+            //Console.WriteLine($"{JsonSerializer.Serialize(authenticationResult)}");
             FormatJsonOutput(authenticationResult);
         }
 
@@ -138,7 +141,7 @@ namespace netCoreMsal
                 if (arg == "tenantid") { tenantId = args[++i]; }
                 if (arg == "detail") { detail = true; }
                 if (arg == "?") { help = true; }
-                if (arg == "scope")
+                if (arg == "scopes")
                 {
                     scopes.Clear();
                     scopes.AddRange(args[++i].Split(','));
