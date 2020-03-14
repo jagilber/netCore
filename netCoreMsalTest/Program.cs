@@ -55,7 +55,6 @@ namespace netCoreMsal
         {
             try
             {
-                Console.WriteLine($"// adding resource {resource} to scope");
                 List<string> newScopes = new List<string>();
 
                 foreach (string scope in scopes)
