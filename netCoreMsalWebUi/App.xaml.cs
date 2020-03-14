@@ -74,10 +74,10 @@ namespace netCoreMsalWebUi
             Authorize();
         }
 
-        private void Authorize()
+        private async void Authorize()
         {
             CustomWebUi customWebUi = new CustomWebUi(Dispatcher);
-            
+
             try
             {
                 List<string> newScopes = new List<string>();
@@ -126,17 +126,17 @@ namespace netCoreMsalWebUi
                         .Build();
 
                     TokenCacheHelper.EnableSerialization(confidentialClientApp.UserTokenCache);
-                    authenticationResult = confidentialClientApp
+                    authenticationResult = await confidentialClientApp
                         .AcquireTokenForClient(scopes.Count > 0 ? scopes : defaultScope)
-                        .ExecuteAsync().Result;
+                        .ExecuteAsync();//.Result;
                 }
             }
             catch (MsalUiRequiredException)
             {
-                authenticationResult = publicClientApp
+                authenticationResult = await publicClientApp
                     .AcquireTokenInteractive(defaultScope)
                     .WithCustomWebUi(customWebUi)
-                    .ExecuteAsync().Result;
+                    .ExecuteAsync();//.Result;
             }
             catch (Exception e)
             {
