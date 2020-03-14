@@ -1,6 +1,6 @@
 ﻿// ------------------------------------------------------------
 // Licensed under the MIT License (MIT). See License.txt in the repo root for license information.
-// .netcore 3.0 commandline utility with customwebui to authorize to AAD with MSAL.
+// .netcore 3.1 commandline utility with customwebui to authorize to AAD with MSAL.
 // returns AuthenticationResult json output
 // ------------------------------------------------------------
 
@@ -21,16 +21,26 @@ namespace netCoreMsalWebUi
 {
     public partial class App : Application
     {
+        private AuthenticationResult authenticationResult = default;
         private string clientId = "1950a258-227b-4e31-a9cf-717495945fc2";
+        private string clientName = null;
+        private string clientSecret = null;
+        private IConfidentialClientApplication confidentialClientApp;
+        private List<string> defaultScope = new List<string>() { ".default" };
         private static bool detail = false;
         private bool help = false;
         private IPublicClientApplication publicClientApp;
         private string redirectUri = null; //"http://localhost";
         private string resource = null;
-        private List<string> scopes = new List<string>() { ".default" };
+        private List<string> scopes = new List<string>();
         private string tenantId = "common";
 
-        private void App_Startup(object sender, StartupEventArgs e)
+
+        public void MsalLoggerCallback(LogLevel level, string message, bool containsPII)
+        {
+            WriteOutput($"// {level} {message}");
+        }
+        private void Execute(object sender, StartupEventArgs e)
         {
             for (int i = 0; i != e.Args.Length; ++i)
             {
@@ -40,10 +50,12 @@ namespace netCoreMsalWebUi
                 if (arg == "resource") { resource = e.Args[++i]; }
                 if (arg == "redirecturi") { redirectUri = e.Args[++i]; }
                 if (arg == "clientid") { clientId = e.Args[++i]; }
+                if (arg == "clientname") { clientName = e.Args[++i]; }
+                if (arg == "clientsecret") { clientSecret = e.Args[++i]; }
                 if (arg == "tenantid") { tenantId = e.Args[++i]; }
                 if (arg == "detail") { detail = true; }
                 if (arg == "?") { help = true; }
-                if (arg == "scope")
+                if (arg == "scopes")
                 {
                     scopes.Clear();
                     scopes.AddRange(e.Args[++i].Split(','));
@@ -52,7 +64,7 @@ namespace netCoreMsalWebUi
 
             if (help)
             {
-                Console.WriteLine("// optional arguments --resource --redirectUri --clientId --tenantId --scope --detail");
+                Console.WriteLine("// optional arguments --resource --redirectUri --clientId --clientsecret --tenantId --scopes --detail");
                 Console.WriteLine("// run from non administrator prompt!");
                 ShowDetail();
                 return;
@@ -64,48 +76,84 @@ namespace netCoreMsalWebUi
 
         private async void Authorize()
         {
-            AuthenticationResult authenticationResult = default;
             CustomWebUi customWebUi = new CustomWebUi(Dispatcher);
-
-            if (string.IsNullOrEmpty(redirectUri))
-            {
-                publicClientApp = PublicClientApplicationBuilder
-                    .Create(clientId)
-                    .WithAuthority(AzureCloudInstance.AzurePublic, tenantId)
-                    .WithDefaultRedirectUri()
-                    .Build();
-            }
-            else
-            {
-                publicClientApp = PublicClientApplicationBuilder
-                    .CreateWithApplicationOptions(new PublicClientApplicationOptions { ClientId = clientId, RedirectUri = redirectUri })
-                    .WithAuthority(AzureCloudInstance.AzurePublic, tenantId)
-                    .Build();
-            }
 
             try
             {
-                TokenCacheHelper.EnableSerialization(publicClientApp.UserTokenCache);
-                authenticationResult = await publicClientApp
-                    .AcquireTokenSilent(scopes, publicClientApp.GetAccountsAsync().Result.FirstOrDefault())
-                    .ExecuteAsync();
+                List<string> newScopes = new List<string>();
+
+                foreach (string scope in scopes)
+                {
+                    newScopes.Add($"{resource}/{scope}");
+                }
+
+                scopes = newScopes;
+
+                if (string.IsNullOrEmpty(clientSecret))
+                {
+                    // user creds 
+                    publicClientApp = PublicClientApplicationBuilder
+                        .Create(clientId)
+                        .WithAuthority(AzureCloudInstance.AzurePublic, tenantId)
+                        .WithLogging(MsalLoggerCallback, LogLevel.Verbose, true, true)
+                        .WithDefaultRedirectUri()
+                        .Build();
+
+                    TokenCacheHelper.EnableSerialization(publicClientApp.UserTokenCache);
+                    authenticationResult = publicClientApp
+                        .AcquireTokenSilent(defaultScope, publicClientApp.GetAccountsAsync().Result.FirstOrDefault())
+                        .ExecuteAsync().Result;
+                }
+                else
+                {
+                    // client creds
+                    if (string.IsNullOrEmpty(clientName))
+                    {
+                        clientName = clientId;
+                    }
+
+                    confidentialClientApp = ConfidentialClientApplicationBuilder
+                        .CreateWithApplicationOptions(new ConfidentialClientApplicationOptions
+                        {
+                            ClientId = clientId,
+                            RedirectUri = redirectUri,
+                            ClientSecret = clientSecret,
+                            TenantId = tenantId,
+                            ClientName = clientName
+                        })
+                        .WithAuthority(AzureCloudInstance.AzurePublic, tenantId)
+                        .WithLogging(MsalLoggerCallback, LogLevel.Verbose, true, true)
+                        .Build();
+
+                    TokenCacheHelper.EnableSerialization(confidentialClientApp.UserTokenCache);
+                    authenticationResult = await confidentialClientApp
+                        .AcquireTokenForClient(scopes.Count > 0 ? scopes : defaultScope)
+                        .ExecuteAsync();//.Result;
+                }
             }
-            catch (MsalUiRequiredException me)
+            catch (MsalUiRequiredException)
             {
-                WriteOutput($"msal ui exception: {me.ToString()}");
                 authenticationResult = await publicClientApp
-                    .AcquireTokenInteractive(scopes)
+                    .AcquireTokenInteractive(defaultScope)
                     .WithCustomWebUi(customWebUi)
-                    .ExecuteAsync();
+                    .ExecuteAsync();//.Result;
             }
             catch (Exception e)
             {
-                Console.WriteLine($"exception: {e.ToString()}");
+                Console.WriteLine($"{e}");
+            }
+
+            if (scopes.Count > 0)
+            {
+                authenticationResult = publicClientApp
+                    .AcquireTokenSilent(scopes, publicClientApp.GetAccountsAsync().Result.FirstOrDefault())
+                    .ExecuteAsync().Result;
             }
 
             FormatJsonOutput(authenticationResult);
             App.Current.Shutdown();
         }
+
         private void FormatJsonOutput(AuthenticationResult authenticationResult)
         {
             JsonWriterOptions options = new JsonWriterOptions { Indented = true };
@@ -118,15 +166,15 @@ namespace netCoreMsalWebUi
                     writer.WriteString("AccessToken", authenticationResult.AccessToken);
 
                     writer.WriteStartObject("Account");
-                    writer.WriteString("Environment", authenticationResult.Account.Environment);
+                    writer.WriteString("Environment", authenticationResult.Account?.Environment);
 
                     writer.WriteStartObject("HomeAccountId");
-                    writer.WriteString("Identifier", authenticationResult.Account.HomeAccountId.Identifier);
-                    writer.WriteString("ObjectId", authenticationResult.Account.HomeAccountId.ObjectId);
-                    writer.WriteString("TenantId", authenticationResult.Account.HomeAccountId.TenantId);
+                    writer.WriteString("Identifier", authenticationResult.Account?.HomeAccountId.Identifier);
+                    writer.WriteString("ObjectId", authenticationResult.Account?.HomeAccountId.ObjectId);
+                    writer.WriteString("TenantId", authenticationResult.Account?.HomeAccountId.TenantId);
                     writer.WriteEndObject();
 
-                    writer.WriteString("Username", authenticationResult.Account.Username);
+                    writer.WriteString("Username", authenticationResult.Account?.Username);
                     writer.WriteEndObject();
 
                     writer.WriteString("CorrelationId", authenticationResult.CorrelationId);
@@ -161,7 +209,6 @@ namespace netCoreMsalWebUi
             Console.WriteLine($"// tenantID: {tenantId}");
             Console.WriteLine("//");
         }
-
         public static void WriteOutput(string output)
         {
             if (detail)

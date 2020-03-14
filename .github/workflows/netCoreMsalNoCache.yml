@@ -2,7 +2,7 @@ name: CI netCoreMsalNoCache
 
 env:
   artifacts_path: netCoreMsalNoCache\bin\release\artifacts
-  release_path: netCoreMsalNoCache\bin\release\netcoreapp3.0\win-x64\publish
+  release_path: netCoreMsalNoCache\bin\release\netcoreapp3.1\win-x64\publish
   project_name: netCoreMsalNoCache
   github_owner: ${{ github.event.repository.owner.name }}
 

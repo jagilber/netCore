@@ -32,7 +32,7 @@ using System.Windows.Threading;
 
         public static System.Reflection.Assembly Test()
         {
-            System.Reflection.Assembly assembly = System.Reflection.Assembly.LoadFrom(@"C:\Users\user\.nuget\packages\microsoft.toolkit.wpf.ui.controls.webview\6.0.0-preview9.1\lib\netcoreapp3.0\Microsoft.Toolkit.Wpf.UI.Controls.WebView.dll");
+            System.Reflection.Assembly assembly = System.Reflection.Assembly.LoadFrom(@"C:\Users\user\.nuget\packages\microsoft.toolkit.wpf.ui.controls.webview\6.0.0-preview9.1\lib\netcoreapp3.1\Microsoft.Toolkit.Wpf.UI.Controls.WebView.dll");
             return assembly;
         }
 
@@ -112,17 +112,17 @@ using System.Windows.Threading;
 <#
 add-type $code1 `
     -CompilerOptions @(
-        "-reference:C:\Users\user\.nuget\packages\microsoft.toolkit.wpf.ui.controls.webview\6.0.0-preview9.1\lib\netcoreapp3.0\Microsoft.Toolkit.Wpf.UI.Controls.WebView.dll",
+        "-reference:C:\Users\user\.nuget\packages\microsoft.toolkit.wpf.ui.controls.webview\6.0.0-preview9.1\lib\netcoreapp3.1\Microsoft.Toolkit.Wpf.UI.Controls.WebView.dll",
         #"C:\Users\user\.nuget\packages\system.runtime\4.0.20\ref\dotnet\System.Runtime.dll",
-        #"C:\Program Files\dotnet\packs\Microsoft.NETCore.App.Ref\3.0.0\ref\netcoreapp3.0\System.Runtime.dll",
+        #"C:\Program Files\dotnet\packs\Microsoft.NETCore.App.Ref\3.1.0\ref\netcoreapp3.1\System.Runtime.dll",
         "-reference:C:\Users\user\.nuget\packages\microsoft.identitymodel.clients.activedirectory\5.2.2\lib\netstandard1.3\Microsoft.IdentityModel.Clients.ActiveDirectory.dll",
         "-reference:C:\Users\user\.nuget\packages\microsoft.netcore.app\2.2.7\ref\netcoreapp2.2\System.Windows.dll",
         "-reference:C:\Users\user\.nuget\packages\windowsbase\4.6.1055\lib\WindowsBase.dll",
         "-reference:C:\Users\user\.nuget\packages\microsoft.netcore.app\2.2.7\ref\netcoreapp2.2\mscorlib.dll",
         "-reference:C:\Users\user\.nuget\packages\microsoft.netcore.app\2.2.7\ref\netcoreapp2.2\System.Threading.dll",
         "-reference:C:\Users\user\.nuget\packages\microsoft.netcore.app\2.2.7\ref\netcoreapp2.2\System.Threading.Tasks.dll",
-        "-reference:C:\Program Files\dotnet\packs\Microsoft.WindowsDesktop.App.Ref\3.0.0\ref\netcoreapp3.0\PresentationCore.dll",
-        "-reference:C:\Program Files\dotnet\packs\Microsoft.WindowsDesktop.App.Ref\3.0.0\ref\netcoreapp3.0\PresentationFramework.dll"
+        "-reference:C:\Program Files\dotnet\packs\Microsoft.WindowsDesktop.App.Ref\3.1.0\ref\netcoreapp3.1\PresentationCore.dll",
+        "-reference:C:\Program Files\dotnet\packs\Microsoft.WindowsDesktop.App.Ref\3.1.0\ref\netcoreapp3.1\PresentationFramework.dll"
         #"C:\Users\user\.nuget\packages\system.threading.tasks.extensions\4.6.0-preview.18571.3\lib\netstandard2.0\System.Threading.Tasks.Extensions.dll"
     )
 
@@ -136,17 +136,17 @@ return
 
 # -CompilerOptions @('-nowarn:CS1701','-debug:full','-unsafe','-version') #`
 add-type $code1 `
-    -ReferencedAssemblies @("C:\Users\user\.nuget\packages\microsoft.toolkit.wpf.ui.controls.webview\6.0.0-preview9.1\lib\netcoreapp3.0\Microsoft.Toolkit.Wpf.UI.Controls.WebView.dll",
+    -ReferencedAssemblies @("C:\Users\user\.nuget\packages\microsoft.toolkit.wpf.ui.controls.webview\6.0.0-preview9.1\lib\netcoreapp3.1\Microsoft.Toolkit.Wpf.UI.Controls.WebView.dll",
         #"C:\Users\user\.nuget\packages\system.runtime\4.0.20\ref\dotnet\System.Runtime.dll",
-        #"C:\Program Files\dotnet\packs\Microsoft.NETCore.App.Ref\3.0.0\ref\netcoreapp3.0\System.Runtime.dll",
+        #"C:\Program Files\dotnet\packs\Microsoft.NETCore.App.Ref\3.1.0\ref\netcoreapp3.1\System.Runtime.dll",
         "C:\Users\user\.nuget\packages\microsoft.identitymodel.clients.activedirectory\5.2.2\lib\netstandard1.3\Microsoft.IdentityModel.Clients.ActiveDirectory.dll",
         "C:\Users\user\.nuget\packages\microsoft.netcore.app\2.2.7\ref\netcoreapp2.2\System.Windows.dll",
         "C:\Users\user\.nuget\packages\windowsbase\4.6.1055\lib\WindowsBase.dll",
         "C:\Users\user\.nuget\packages\microsoft.netcore.app\2.2.7\ref\netcoreapp2.2\mscorlib.dll",
         "C:\Users\user\.nuget\packages\microsoft.netcore.app\2.2.7\ref\netcoreapp2.2\System.Threading.dll",
         "C:\Users\user\.nuget\packages\microsoft.netcore.app\2.2.7\ref\netcoreapp2.2\System.Threading.Tasks.dll",
-        "C:\Program Files\dotnet\packs\Microsoft.WindowsDesktop.App.Ref\3.0.0\ref\netcoreapp3.0\PresentationCore.dll",
-        "C:\Program Files\dotnet\packs\Microsoft.WindowsDesktop.App.Ref\3.0.0\ref\netcoreapp3.0\PresentationFramework.dll"
+        "C:\Program Files\dotnet\packs\Microsoft.WindowsDesktop.App.Ref\3.1.0\ref\netcoreapp3.1\PresentationCore.dll",
+        "C:\Program Files\dotnet\packs\Microsoft.WindowsDesktop.App.Ref\3.1.0\ref\netcoreapp3.1\PresentationFramework.dll"
         #"C:\Users\user\.nuget\packages\system.threading.tasks.extensions\4.6.0-preview.18571.3\lib\netstandard2.0\System.Threading.Tasks.Extensions.dll"
         ) 
         #>
@@ -167,7 +167,7 @@ public class Ident
 {
     public static bool Test()
     {
-        System.Reflection.Assembly assembly = System.Reflection.Assembly.LoadFrom(@"C:\Users\user\.nuget\packages\microsoft.toolkit.wpf.ui.controls.webview\6.0.0-preview9.1\lib\netcoreapp3.0\Microsoft.Toolkit.Wpf.UI.Controls.WebView.dll");
+        System.Reflection.Assembly assembly = System.Reflection.Assembly.LoadFrom(@"C:\Users\user\.nuget\packages\microsoft.toolkit.wpf.ui.controls.webview\6.0.0-preview9.1\lib\netcoreapp3.1\Microsoft.Toolkit.Wpf.UI.Controls.WebView.dll");
         return true;
     }
 }
@@ -178,17 +178,17 @@ add-type $code2 -ReferencedAssemblies $ass
 
 
 <#
-        "-reference:C:\Users\user\.nuget\packages\microsoft.toolkit.wpf.ui.controls.webview\6.0.0-preview9.1\lib\netcoreapp3.0\Microsoft.Toolkit.Wpf.UI.Controls.WebView.dll",
+        "-reference:C:\Users\user\.nuget\packages\microsoft.toolkit.wpf.ui.controls.webview\6.0.0-preview9.1\lib\netcoreapp3.1\Microsoft.Toolkit.Wpf.UI.Controls.WebView.dll",
         #"C:\Users\user\.nuget\packages\system.runtime\4.0.20\ref\dotnet\System.Runtime.dll",
-        #"C:\Program Files\dotnet\packs\Microsoft.NETCore.App.Ref\3.0.0\ref\netcoreapp3.0\System.Runtime.dll",
+        #"C:\Program Files\dotnet\packs\Microsoft.NETCore.App.Ref\3.1.0\ref\netcoreapp3.1\System.Runtime.dll",
         "-reference:C:\Users\user\.nuget\packages\microsoft.identitymodel.clients.activedirectory\5.2.2\lib\netstandard1.3\Microsoft.IdentityModel.Clients.ActiveDirectory.dll",
         "-reference:C:\Users\user\.nuget\packages\microsoft.netcore.app\2.2.7\ref\netcoreapp2.2\System.Windows.dll",
         "-reference:C:\Users\user\.nuget\packages\windowsbase\4.6.1055\lib\WindowsBase.dll",
         "-reference:C:\Users\user\.nuget\packages\microsoft.netcore.app\2.2.7\ref\netcoreapp2.2\mscorlib.dll",
         "-reference:C:\Users\user\.nuget\packages\microsoft.netcore.app\2.2.7\ref\netcoreapp2.2\System.Threading.dll",
         "-reference:C:\Users\user\.nuget\packages\microsoft.netcore.app\2.2.7\ref\netcoreapp2.2\System.Threading.Tasks.dll",
-        "-reference:C:\Program Files\dotnet\packs\Microsoft.WindowsDesktop.App.Ref\3.0.0\ref\netcoreapp3.0\PresentationCore.dll",
-        "-reference:C:\Program Files\dotnet\packs\Microsoft.WindowsDesktop.App.Ref\3.0.0\ref\netcoreapp3.0\PresentationFramework.dll"
+        "-reference:C:\Program Files\dotnet\packs\Microsoft.WindowsDesktop.App.Ref\3.1.0\ref\netcoreapp3.1\PresentationCore.dll",
+        "-reference:C:\Program Files\dotnet\packs\Microsoft.WindowsDesktop.App.Ref\3.1.0\ref\netcoreapp3.1\PresentationFramework.dll"
         #"C:\Users\user\.nuget\packages\system.threading.tasks.extensions\4.6.0-preview.18571.3\lib\netstandard2.0\System.Threading.Tasks.Extensions.dll"
 
 #>

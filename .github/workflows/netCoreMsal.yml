@@ -2,7 +2,7 @@ name: CI netCoreMsal
 
 env:
   artifacts_path: netCoreMsal\bin\release\artifacts
-  release_path: netCoreMsal\bin\release\netcoreapp3.0\win-x64\publish
+  release_path: netCoreMsal\bin\release\netcoreapp3.1\win-x64\publish
   project_name: netCoreMsal
   github_owner: ${{ github.event.repository.owner.name }}
 
