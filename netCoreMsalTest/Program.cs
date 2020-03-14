@@ -28,12 +28,15 @@ namespace netCoreMsal
         private IPublicClientApplication publicClientApp;
         private string redirectUri = null; //"http://localhost";
         private string resource = null;
-        private List<string> scopes = new List<string>();// { ".default" };
+        private List<string> scopes = new List<string>();
         private string tenantId = "common";
 
         public void MsalLoggerCallback(LogLevel level, string message, bool containsPII)
         {
-            Console.WriteLine($"// {DateTime.Now} {level} {containsPII} {message}");
+            if (detail)
+            {
+                Console.WriteLine($"// {level} {message}");
+            }
         }
 
         private static void Main(string[] args)
