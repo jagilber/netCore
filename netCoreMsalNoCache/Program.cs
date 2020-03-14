@@ -50,7 +50,7 @@ namespace netCoreMsalNoCache
                 if (arg == "tenantid") { tenantId = args[++i]; }
                 if (arg == "detail") { detail = true; }
                 if (arg == "?") { help = true; }
-                if (arg == "scope")
+                if (arg == "scopes")
                 {
                     scopes.Clear();
                     scopes.AddRange(args[++i].Split(','));
@@ -59,7 +59,7 @@ namespace netCoreMsalNoCache
 
             if (help)
             {
-                Console.WriteLine("// optional arguments --resource --redirectUri --clientId --tenantId --scope --detail");
+                Console.WriteLine("// optional arguments --resource --redirectUri --clientId --tenantId --scopes --detail");
                 Console.WriteLine("// run from non administrator prompt!");
                 ShowDetail();
                 return;

@@ -43,7 +43,7 @@ namespace netCoreMsalWebUi
                 if (arg == "tenantid") { tenantId = e.Args[++i]; }
                 if (arg == "detail") { detail = true; }
                 if (arg == "?") { help = true; }
-                if (arg == "scope")
+                if (arg == "scopes")
                 {
                     scopes.Clear();
                     scopes.AddRange(e.Args[++i].Split(','));

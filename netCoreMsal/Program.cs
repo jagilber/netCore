@@ -152,7 +152,7 @@ namespace netCoreMsal
 
             if (help)
             {
-                Console.WriteLine("// optional arguments --resource --redirectUri --clientId --clientsecret --tenantId --scope --detail");
+                Console.WriteLine("// optional arguments --resource --redirectUri --clientId --clientsecret --tenantId --scopes --detail");
                 Console.WriteLine("// run from non administrator prompt!");
                 ShowDetail();
                 return;
