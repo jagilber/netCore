@@ -12,7 +12,7 @@ using System.Text.Json;
 using System.Linq;
 using Microsoft.Identity.Client;
 
-namespace netCoreMsal
+namespace netCoreMsalNoCache
 {
     internal class Program
     {
